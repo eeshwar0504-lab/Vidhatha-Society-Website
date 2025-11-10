@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    /* ===== Build & language options ===== */
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+
+    /* ===== Allow both JS + TS ===== */
+    "allowJs": true,          // ✅ Allows importing and compiling .js files
+    "checkJs": false,         // Optional: set to true if you want JS type checking
+
+    /* ===== TypeScript strictness ===== */
+    "skipLibCheck": true,
+    "strict": true,
+
+    /* ===== Emission & interop ===== */
+    "noEmit": true,
+    "esModuleInterop": true,
+
+    /* ===== Module resolution ===== */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+
+    /* ===== Next.js plugin ===== */
+    "plugins": [
+      { "name": "next" }
+    ],
+
+    /* ===== Path aliases ===== */
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+
+  /* ===== Include both TS and JS ===== */
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    ".next/types/**/*.ts"
+  ],
+
+  "exclude": ["node_modules"]
+}

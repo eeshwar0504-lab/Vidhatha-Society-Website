@@ -1,0 +1,142 @@
+{
+  "categories": [
+    {
+      "key": "education",
+      "title": "Education",
+      "description": "Support students with learning essentials and scholarships.",
+      "subcategories": [
+        {
+          "key": "school-kits",
+          "title": "School Kits",
+          "desc": "Bags, books, stationery for one child.",
+          "suggested": [
+            500,
+            1000,
+            1500
+          ]
+        },
+        {
+          "key": "tuition-support",
+          "title": "Tuition Support",
+          "desc": "Monthly tuition assistance for underprivileged students.",
+          "suggested": [
+            1000,
+            2000,
+            3000
+          ]
+        },
+        {
+          "key": "digital-learning",
+          "title": "Digital Learning",
+          "desc": "Tablets, internet, and content for smart classes.",
+          "suggested": [
+            2500,
+            5000,
+            7500
+          ]
+        }
+      ]
+    },
+    {
+      "key": "health",
+      "title": "Health",
+      "description": "Fund checkups, medicines, and community health drives.",
+      "subcategories": [
+        {
+          "key": "medical-camps",
+          "title": "Medical Camps",
+          "desc": "Set up free diagnosis camps.",
+          "suggested": [
+            2000,
+            5000,
+            10000
+          ]
+        },
+        {
+          "key": "medicines",
+          "title": "Medicines",
+          "desc": "Essential medicines for a family.",
+          "suggested": [
+            800,
+            1500,
+            2500
+          ]
+        },
+        {
+          "key": "sanitation",
+          "title": "Sanitation Kits",
+          "desc": "Hygiene kits for women and children.",
+          "suggested": [
+            600,
+            1200,
+            1800
+          ]
+        }
+      ]
+    },
+    {
+      "key": "hunger",
+      "title": "Hunger Relief",
+      "description": "Provide meals and ration kits to families in need.",
+      "subcategories": [
+        {
+          "key": "community-meals",
+          "title": "Community Meals",
+          "desc": "Cooked meals for a community kitchen.",
+          "suggested": [
+            1000,
+            2000,
+            5000
+          ]
+        },
+        {
+          "key": "ration-kits",
+          "title": "Ration Kits",
+          "desc": "Groceries for a family for a month.",
+          "suggested": [
+            1500,
+            2500,
+            3500
+          ]
+        },
+        {
+          "key": "midday-snacks",
+          "title": "Mid-day Snacks",
+          "desc": "Nutritious snacks for school kids.",
+          "suggested": [
+            700,
+            1400,
+            2100
+          ]
+        }
+      ]
+    },
+    {
+      "key": "emergency",
+      "title": "Emergency Aid",
+      "description": "Act fast during floods, heatwaves, or other crises.",
+      "subcategories": [
+        {
+          "key": "relief-kits",
+          "title": "Relief Kits",
+          "desc": "Ready kits for families during disasters.",
+          "suggested": [
+            2000,
+            4000,
+            8000
+          ]
+        },
+        {
+          "key": "water-relief",
+          "title": "Water Relief",
+          "desc": "Clean drinking water distribution.",
+          "suggested": [
+            500,
+            1000,
+            2000
+          ]
+        }
+      ]
+    }
+  ]
+}

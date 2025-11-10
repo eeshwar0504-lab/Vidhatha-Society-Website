@@ -1,0 +1,36 @@
+[
+  {
+    "slug": "education-for-all",
+    "title": "Education for All",
+    "subtitle": "Improving access to quality education",
+    "description": "We run after-school programs, provide learning materials, and support teachers to improve educational outcomes.",
+    "activities": [
+      "After-school tutoring",
+      "Teacher training workshops",
+      "School supplies distribution"
+    ],
+    "impact": "Over 2,000 children supported with learning resources and mentorship.",
+    "stats": {
+      "beneficiaries": 2000,
+      "locations": 12,
+      "years": 6
+    }
+  },
+  {
+    "slug": "women-empowerment",
+    "title": "Women Empowerment",
+    "subtitle": "Skills training and economic opportunities",
+    "description": "We provide vocational training and micro-grants to women entrepreneurs.",
+    "activities": [
+      "Vocational training",
+      "Micro-grants",
+      "Market access support"
+    ],
+    "impact": "Hundreds of women started sustainable small businesses with seed funding and training.",
+    "stats": {
+      "beneficiaries": 450,
+      "locations": 8,
+      "years": 4
+    }
+  }
+]
