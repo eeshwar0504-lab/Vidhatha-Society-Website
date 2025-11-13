@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import programsData from "../../data/programs.json";
 
+
 function slugify(text) {
   return String(text)
     .toLowerCase()

@@ -1,8 +1,12 @@
 import programsData from "../../../data/programs.json";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
+/* helper slug function (matches the slug in JSON if needed) */
 function slugify(text) {
-  return String(text)
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/[’'"]/g, "")
@@ -13,8 +17,9 @@ function slugify(text) {
 
 export function generateStaticParams() {
   const params = [];
-  for (const cat of (programsData.categories || [])) {
-    for (const p of cat.programs) {
+  const cats = programsData?.categories || [];
+  for (const cat of cats) {
+    for (const p of cat.programs || []) {
       const slug = typeof p === "string" ? slugify(p) : (p.slug || slugify(p.title));
       params.push({ slug });
     }
@@ -22,15 +27,18 @@ export function generateStaticParams() {
   return params;
 }
 
-export default function ProgramDetailPage({ params }) {
+export default function ProgramDetail({ params }) {
   const { slug } = params;
   let program = null;
 
-  for (const cat of (programsData.categories || [])) {
-    for (const p of cat.programs) {
+  // find the program across categories
+  for (const cat of programsData?.categories || []) {
+    for (const p of cat.programs || []) {
       const candidateSlug = typeof p === "string" ? slugify(p) : (p.slug || slugify(p.title));
       if (candidateSlug === slug) {
-        program = typeof p === "string" ? { title: p, slug: candidateSlug } : { ...p };
+        program = typeof p === "string"
+          ? { title: p, slug: candidateSlug, description: "", short: "", images: [], donation_target: undefined }
+          : { ...p };
         program.category = cat.title;
         break;
       }
@@ -43,11 +51,33 @@ export default function ProgramDetailPage({ params }) {
   return (
     <main className="container mx-auto px-4 py-12">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-sm">
-        <div className="mb-3 text-sm text-gray-500">Category: {program.category}</div>
+        <div className="mb-3 text-sm text-gray-500">Category: {program.category || "General"}</div>
         <h1 className="text-2xl font-bold mb-3">{program.title}</h1>
         {program.short && <p className="text-gray-600 mb-3">{program.short}</p>}
-        <p className="text-gray-700 mb-6">{program.description || "No description available yet."}</p>
 
+        {/* Markdown-rendered description */}
+       <div className="prose prose-lg max-w-none text-gray-700 mb-6">
+  <ReactMarkdown
+    remarkPlugins={[remarkGfm]}
+    components={{
+      h2: ({node, ...props}) => (
+        <h2 className="mt-8 mb-3 font-bold text-xl text-gray-900" {...props} />
+      ),
+      h3: ({node, ...props}) => (
+        <h3 className="mt-6 mb-2 font-semibold text-lg text-gray-800" {...props} />
+      ),
+      p: ({node, ...props}) => (
+        <p className="mb-4 leading-relaxed" {...props} />
+      ),
+      hr: () => <hr className="my-8 border-gray-300" />,
+    }}
+  >
+    {program.description}
+  </ReactMarkdown>
+</div>
+
+
+        {/* images (if any) */}
         {program.images && program.images.length > 0 && (
           <div className="grid grid-cols-2 gap-3 mb-6">
             {program.images.map((src, i) => (
@@ -58,29 +88,15 @@ export default function ProgramDetailPage({ params }) {
 
         {program.donation_target ? (
           <div className="mb-6">
-            <strong>Donation target:</strong> ₹{program.donation_target.toLocaleString()}
+            <strong>Donation target:</strong> ₹{Number(program.donation_target).toLocaleString()}
           </div>
         ) : null}
 
         <div className="flex gap-3">
-          <LinkButton href="/donate">Donate to this program</LinkButton>
-          <LinkButton href="/volunteer" variant="ghost">Volunteer</LinkButton>
+          <Link href="/donate" className="px-4 py-2 rounded-md bg-purple-600 text-white">Donate</Link>
+          <Link href="/volunteer" className="px-4 py-2 rounded-md border">Volunteer</Link>
         </div>
       </div>
     </main>
-  );
-}
-
-// small LinkButton component to avoid additional imports
-function LinkButton({ href, children, variant = "primary" }) {
-  const base = "px-4 py-2 rounded-md font-medium inline-block text-center";
-  const style =
-    variant === "ghost"
-      ? `${base} border`
-      : `${base} bg-purple-600 text-white hover:bg-purple-700`;
-  return (
-    <a href={href} className={style}>
-      {children}
-    </a>
   );
 }
