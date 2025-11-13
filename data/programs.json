@@ -5,22 +5,24 @@
       "title": "Social Welfare & Humanitarian Aid",
       "description": "Basic needs, dignity, and social care support programs.",
       "programs": [
+       {
+  "title": "Free Food Distribution",
+  "slug": "free-food-distribution",
+  "short": "Providing meals to underprivileged families.",
+  "description": "Help us deliver hope and food to people in need by donating to our Food Distribution Program. In order to provide wholesome food to those in need, we frequently offer meals in underprivileged areas, hospitals, and slums.\n\nAny amount you choose to donate, even ₹11, can have a significant impact. Every donation enables us to reach more people and feed the most vulnerable.\n\nParticipate in this act of kindness with us; your help can make someone's day happier and more comfortable. Make a donation now to contribute to the change!",
+  "images": [],
+  "donation_target": 50000
+},
+
         {
-          "title": "Free Food Distribution",
-          "slug": "free-food-distribution",
-          "short": "Providing meals to underprivileged families.",
-          "description": "Vidhatha Society organizes regular free food distribution drives aimed at supporting homeless individuals, low-income families, and daily wage workers. Our volunteers work tirelessly to ensure that nutritious meals reach the people who need them the most.",
-          "images": [],
-          "donation_target": 50000
-        },
-        {
-          "title": "Funeral Services",
-          "slug": "funeral-services",
-          "short": "Supporting families who cannot afford funeral costs.",
-          "description": "Our funeral services program assists families who struggle to afford the costs of performing last rites. We provide support, materials, and volunteers to help families conduct funeral procedures with dignity.",
-          "images": [],
-          "donation_target": 25000
-        },
+  "title": "Funeral Services",
+  "slug": "funeral-services",
+  "short": "Respectful and tradition-based funeral support.",
+  "description": "We provide funeral services that are adapted to the unique traditions and customs of various religions as part of our dedication to helping people and families through trying times. Our objective is to offer considerate and compassionate support while making sure that all customs and traditions are respected in accordance with the family's values and beliefs.\n\nWe make this difficult moment a little bit easier by handling everything with tact and consideration, from setting up the ceremonies to offering guidance on religious customs. Our staff is committed to helping families through their grieving process while honouring their spiritual and cultural needs at every stage.",
+  "images": [],
+  "donation_target": 40000
+}
+,
         {
           "title": "Distributions and Donations",
           "slug": "distributions-and-donations",
