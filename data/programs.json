@@ -1,36 +1,211 @@
-[
-  {
-    "slug": "education-for-all",
-    "title": "Education for All",
-    "subtitle": "Improving access to quality education",
-    "description": "We run after-school programs, provide learning materials, and support teachers to improve educational outcomes.",
-    "activities": [
-      "After-school tutoring",
-      "Teacher training workshops",
-      "School supplies distribution"
-    ],
-    "impact": "Over 2,000 children supported with learning resources and mentorship.",
-    "stats": {
-      "beneficiaries": 2000,
-      "locations": 12,
-      "years": 6
+{
+  "categories": [
+    {
+      "key": "social-welfare",
+      "title": "Social Welfare & Humanitarian Aid",
+      "description": "Basic needs, dignity, and social care support programs.",
+      "programs": [
+        {
+          "title": "Free Food Distribution",
+          "slug": "free-food-distribution",
+          "short": "Providing meals to underprivileged families.",
+          "description": "Vidhatha Society organizes regular free food distribution drives aimed at supporting homeless individuals, low-income families, and daily wage workers. Our volunteers work tirelessly to ensure that nutritious meals reach the people who need them the most.",
+          "images": [],
+          "donation_target": 50000
+        },
+        {
+          "title": "Funeral Services",
+          "slug": "funeral-services",
+          "short": "Supporting families who cannot afford funeral costs.",
+          "description": "Our funeral services program assists families who struggle to afford the costs of performing last rites. We provide support, materials, and volunteers to help families conduct funeral procedures with dignity.",
+          "images": [],
+          "donation_target": 25000
+        },
+        {
+          "title": "Distributions and Donations",
+          "slug": "distributions-and-donations",
+          "short": "Providing essential supplies to needy families.",
+          "description": "This program includes distributing clothes, blankets, books, groceries, and other essential items to economically weaker sections. We conduct special donation drives during festivals and emergencies.",
+          "images": [],
+          "donation_target": 30000
+        },
+        {
+          "title": "Other Programs",
+          "slug": "other-programs",
+          "short": "Miscellaneous support activities.",
+          "description": "Additional welfare activities conducted by Vidhatha Society to support various community needs that arise throughout the year.",
+          "images": [],
+          "donation_target": 10000
+        }
+      ]
+    },
+
+    {
+      "key": "awareness-education",
+      "title": "Awareness & Education",
+      "description": "Educating communities and spreading awareness.",
+      "programs": [
+        {
+          "title": "Awareness Programs",
+          "slug": "awareness-programs",
+          "short": "Sessions on safety, human values, and public health.",
+          "description": "We conduct awareness sessions in communities and schools covering topics such as hygiene, traffic safety, women’s safety, and general public awareness.",
+          "images": [],
+          "donation_target": 15000
+        },
+        {
+          "title": "Health Awareness Programs",
+          "slug": "health-awareness-programs",
+          "short": "Promoting healthy living through informative sessions.",
+          "description": "These programs focus on educating people about proper hygiene, preventive healthcare, mental wellness, and nutrition.",
+          "images": [],
+          "donation_target": 20000
+        },
+        {
+          "title": "Environmental Protection Programs",
+          "slug": "environmental-protection-programs",
+          "short": "Plantation, clean-up drives, and eco-awareness.",
+          "description": "This includes activities such as tree plantation drives, plastic-free campaigns, lake clean-ups, and environment-awareness events.",
+          "images": [],
+          "donation_target": 18000
+        },
+        {
+          "title": "Culture, Art and Traditional Programs",
+          "slug": "culture-art-traditional-programs",
+          "short": "Promoting cultural heritage and traditional arts.",
+          "description": "We organize cultural events, art competitions, and traditional celebrations to encourage young talent and preserve cultural heritage.",
+          "images": [],
+          "donation_target": 22000
+        }
+      ]
+    },
+
+    {
+      "key": "health-wellbeing",
+      "title": "Health & Well-being",
+      "description": "Health-related and counseling initiatives.",
+      "programs": [
+        {
+          "title": "Health Programs",
+          "slug": "health-programs",
+          "short": "Medical camps, check-ups, and health support.",
+          "description": "We organize free medical check-up camps, blood donation camps, and provide health assistance to underprivileged families.",
+          "images": [],
+          "donation_target": 40000
+        },
+        {
+          "title": "Counselling Programs",
+          "slug": "counselling-programs",
+          "short": "Supporting mental and emotional well-being.",
+          "description": "Trained counselors guide individuals facing emotional stress, addictions, and mental health challenges.",
+          "images": [],
+          "donation_target": 12000
+        }
+      ]
+    },
+
+    {
+      "key": "senior-special",
+      "title": "Senior & Special Support",
+      "description": "Support for elderly and differently-abled individuals.",
+      "programs": [
+        {
+          "title": "Senior Citizen Programs",
+          "slug": "senior-citizen-programs",
+          "short": "Activities and support for senior citizens.",
+          "description": "Programs include health checkups, recreation activities, and assistance for senior citizens living alone.",
+          "images": [],
+          "donation_target": 20000
+        },
+        {
+          "title": "Disable People Programs",
+          "slug": "disable-people-programs",
+          "short": "Support for differently-abled citizens.",
+          "description": "We extend support like assistive tools, physiotherapy camps, and learning workshops for differently-abled individuals.",
+          "images": [],
+          "donation_target": 25000
+        }
+      ]
+    },
+
+    {
+      "key": "women-youth-child",
+      "title": "Women, Youth & Child Empowerment",
+      "description": "Empowerment and development programs.",
+      "programs": [
+        {
+          "title": "Women & Child Welfare Programs",
+          "slug": "women-child-welfare-programs",
+          "short": "Training and assistance for women and children.",
+          "description": "We focus on the welfare of women and children through educational support, nutrition awareness, and financial literacy.",
+          "images": [],
+          "donation_target": 30000
+        },
+        {
+          "title": "Youth Programs",
+          "slug": "youth-programs",
+          "short": "Educating and engaging the youth.",
+          "description": "These programs include skill sessions, leadership training, and motivational activities for the youth.",
+          "images": [],
+          "donation_target": 18000
+        },
+        {
+          "title": "Skill Development Programs",
+          "slug": "skill-development-programs",
+          "short": "Training the unemployed to become self-sufficient.",
+          "description": "We conduct skill development courses including tailoring, computers, arts & crafts aimed at making individuals job-ready.",
+          "images": [],
+          "donation_target": 25000
+        }
+      ]
+    },
+
+    {
+      "key": "community-rural",
+      "title": "Community & Rural Development",
+      "description": "Initiatives for better communities and rural progress.",
+      "programs": [
+        {
+          "title": "Rural & Urban Development Programs",
+          "slug": "rural-urban-development-programs",
+          "short": "Improving infrastructure and supporting rural communities.",
+          "description": "Programs include water facility improvement, sanitation awareness, and rural literacy support.",
+          "images": [],
+          "donation_target": 35000
+        },
+        {
+          "title": "Environmental Protection Programs",
+          "slug": "environmental-protection-programs-2",
+          "short": "Supporting eco-friendly development.",
+          "description": "Additional drives focusing on sustainability, waste reduction, and green lifestyle promotion.",
+          "images": [],
+          "donation_target": 15000
+        }
+      ]
+    },
+
+    {
+      "key": "celebrations-cultural",
+      "title": "Celebrations & Cultural Integration",
+      "description": "Community bonding through festivals.",
+      "programs": [
+        {
+          "title": "Special Day Celebrations",
+          "slug": "special-day-celebrations",
+          "short": "Celebrating festivals and important events.",
+          "description": "We celebrate special days such as Independence Day, festivals, and cultural events to spread joy and unity.",
+          "images": [],
+          "donation_target": 10000
+        },
+        {
+          "title": "Culture, Art and Traditional Programs",
+          "slug": "culture-art-traditional-programs-2",
+          "short": "Preserving arts and traditions.",
+          "description": "Events showcasing classical arts, traditional music, and cultural values.",
+          "images": [],
+          "donation_target": 20000
+        }
+      ]
     }
-  },
-  {
-    "slug": "women-empowerment",
-    "title": "Women Empowerment",
-    "subtitle": "Skills training and economic opportunities",
-    "description": "We provide vocational training and micro-grants to women entrepreneurs.",
-    "activities": [
-      "Vocational training",
-      "Micro-grants",
-      "Market access support"
-    ],
-    "impact": "Hundreds of women started sustainable small businesses with seed funding and training.",
-    "stats": {
-      "beneficiaries": 450,
-      "locations": 8,
-      "years": 4
-    }
-  }
-]
+  ]
+}
