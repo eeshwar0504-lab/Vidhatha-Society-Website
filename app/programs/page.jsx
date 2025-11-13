@@ -31,7 +31,7 @@ export default function ProgramsPage() {
       </h1>
       <p className="text-gray-600 max-w-2xl mx-auto text-center mb-10">
         Vidhatha Society runs a variety of community-oriented programs dedicated to 
-        empowering lives and uplifting society. Explore the different initiatives below.
+        empowering lives and uplifting society. Explore the different initiatives below here.
       </p>
       <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {programs.map((program, index) => (
