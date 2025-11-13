@@ -24,13 +24,14 @@
 }
 ,
         {
-          "title": "Distributions and Donations",
-          "slug": "distributions-and-donations",
-          "short": "Providing essential supplies to needy families.",
-          "description": "This program includes distributing clothes, blankets, books, groceries, and other essential items to economically weaker sections. We conduct special donation drives during festivals and emergencies.",
-          "images": [],
-          "donation_target": 30000
-        },
+  "title": "Distributions & Donations",
+  "slug": "distributions-and-donations",
+  "short": "Supporting communities through essential resources, education, and welfare distributions.",
+  "description": "Vidhatha Society’s commitment to community welfare shines through our distributions and donations, which lie at the core of our mission to uplift those in need.\n\nBy reaching out with food donations to streets, hospitals, orphanages, old age homes, and supporting individuals facing hardship, we work tirelessly to reduce hunger and provide crucial aid to vulnerable communities. Collaborating with local organizations and dedicated volunteers, we deliver nutritious meals, clothing, and everyday essentials to ensure everyone can access basic comforts and support.\n\nWe believe that education is a transformative force. Our educational initiatives provide children in need with resources such as notebooks, textbooks, stationery, uniforms, and school bags, enabling them to achieve their academic goals. By removing barriers to learning, we foster brighter futures and help empower the next generation to succeed.\n\nOur social impact extends beyond individuals to environmental and cultural preservation. We distribute native plants, traditional idols, and medicines, promoting sustainability, cultural heritage, and holistic wellness. These actions encourage greener communities and reflect our dedication to long-term, positive change.\n\nSupport our initiatives and help us make a real difference. By joining hands, we can build a more caring, resilient, and inclusive community together.\n\n***\n\n## Sanitary Napkin Distribution\n\nOur sanitary napkin distribution program provides essential menstrual hygiene products to women and girls in underserved areas. By supplying sanitary napkins free of charge or at low cost, we help break the stigma around menstruation, safeguard health, and empower women to lead their lives and continue education or work with confidence and dignity.\n\n***\n\n## Books and Stationery Distribution\n\nOur books and stationery drives ensure that children from low-income families receive vital educational materials—textbooks, notebooks, pens, and pencils. By providing these resources, we help bridge educational gaps, promote literacy, and support children’s academic journeys. Supplying essentials also motivates students to remain engaged in their education and reach their full potential.\n\nWe also organize the distribution of necessities such as books, clothing, food, stationery, school bags, uniforms, sweaters, blankets, and umbrellas—bringing comfort and relief, especially during colder months, to children and families who need it most. These efforts aim to ease financial burdens and ensure everyone has what they need for well-being and educational success.\n\n***\n\n## Celebrate Your Special Occasions\n\nCelebrate your personal milestones—like birthdays and anniversaries—by making a donation to our cause. Your support can provide food, clothes, educational supplies, and other important items to people in need. Transform your special day into an occasion of kindness that brings hope and happiness to many. Donate today and become a part of something truly meaningful!",
+  "images": [],
+  "donation_target": 60000
+}
+,
         {
           "title": "Other Programs",
           "slug": "other-programs",
