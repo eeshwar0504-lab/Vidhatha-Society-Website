@@ -65,14 +65,6 @@
           "description": "These programs focus on educating people about proper hygiene, preventive healthcare, mental wellness, and nutrition.",
           "images": [],
           "donation_target": 20000
-        },
-        {
-          "title": "Environmental Protection Programs",
-          "slug": "environmental-protection-programs",
-          "short": "Plantation, clean-up drives, and eco-awareness.",
-          "description": "This includes activities such as tree plantation drives, plastic-free campaigns, lake clean-ups, and environment-awareness events.",
-          "images": [],
-          "donation_target": 18000
         }
        ]
     },
@@ -143,7 +135,7 @@
           "title": "Youth Programs",
           "slug": "youth-programs",
           "short": "Educating and engaging the youth.",
-          "description": "These programs include skill sessions, leadership training, and motivational activities for the youth.",
+          "description": "Skill development programs equip participants with practical abilities and specialized knowledge to succeed across diverse industries. Training covers IT, technical trades, handicrafts, and communication, building a foundation for employability and economic advancement. These programs promote self-reliance so individuals can pursue varied career paths and financial security.\n\n---\n\n## Personality Development\nPrograms for personality development help individuals build self-confidence, strengthen communication, and develop positive traits such as leadership, emotional intelligence, and problem-solving. Interactive sessions and active exercises teach participants to handle challenges, present themselves effectively, and work collaboratively—preparing them for personal and professional success.\n\n---\n\n## Field Trips\nField trips allow students to engage with the world beyond the classroom, visiting sites like museums, historical locations, and industries. These experiences provide practical learning, inspire curiosity, and reveal real-world applications of academic subjects—broadening students’ perspectives and sparking interest in new career possibilities.\n\n---\n\n## Factory Visits\nSeminars and workshops with factory or industry visits offer hands-on insight into different sectors’ operations. Observing manufacturing, business processes, and interacting with professionals, participants gain practical understanding that connects classroom theory to actual practice, helping them make informed career choices.\n\n---\n\n## Student Counseling\nCounseling services assist students with emotional, academic, and personal challenges such as stress, peer pressure, family issues, and mental health. Offering a confidential space and supportive guidance, counselors help students build resilience, confidence, and motivation, enhancing their academic journey and overall well-being.\n\n---\n\n## Career Guidance\nCareer guidance programs provide targeted advice to help young people identify their talents, interests, and career goals. Through assessments, counseling, and industry exposure, participants make informed decisions about their future, aligning their aspirations with labor market needs for long-term job satisfaction and success.\n\n---\n\n## Education Support\nAcademic support initiatives help students excel by offering tutoring, scholarships, and mentoring. These programs bridge educational gaps, promote equal opportunities, and ensure all learners have access to quality education and resources—empowering every student to reach their goals.",
           "images": [],
           "donation_target": 18000
         },
