@@ -73,16 +73,8 @@
           "description": "This includes activities such as tree plantation drives, plastic-free campaigns, lake clean-ups, and environment-awareness events.",
           "images": [],
           "donation_target": 18000
-        },
-        {
-          "title": "Culture, Art and Traditional Programs",
-          "slug": "culture-art-traditional-programs",
-          "short": "Promoting cultural heritage and traditional arts.",
-          "description": "We organize cultural events, art competitions, and traditional celebrations to encourage young talent and preserve cultural heritage.",
-          "images": [],
-          "donation_target": 22000
         }
-      ]
+       ]
     },
 
     {
@@ -205,7 +197,7 @@
           "title": "Culture, Art and Traditional Programs",
           "slug": "culture-art-traditional-programs-2",
           "short": "Preserving arts and traditions.",
-          "description": "Events showcasing classical arts, traditional music, and cultural values.",
+          "description": "Offering cultural classes creates opportunities for individuals to discover and engage with their heritage through language, art, music, and dance. These sessions encourage participants to immerse themselves in traditional practices, helping communities preserve and celebrate cultural identity. Such programs build connections across generations, enrich cultural continuity, and foster a vibrant sense of community pride.\n\n---\n\n### Dance Classes\nDance sessions cover classical, folk, and regional styles, allowing students to experience cultural heritage through movement, rhythm, and storytelling. Learning traditional dance nurtures discipline, creativity, and helps keep age-old practices alive while passing on stories and values through artistic expression.\n\n### Music Classes\nMusic classes introduce students to traditional forms such as Karnatak, Hindustani, and folk music, including vocal techniques and classical instruments like sitar, flute, or tabla. Engaging with cultural music helps preserve rich legacies, develop skills in theory and performance, and deepen appreciation for historical traditions.\n\n### Instrument Classes\nInstrumental training offers hands-on experience with classical instruments—sitar, veena, flute, tabla, drums, string and wind instruments—ensuring endangered musical practices thrive. Learning to play traditional instruments nurtures students’ talents while connecting them with the historical significance and artistry of their culture.\n\n### Arts and Painting\nSpecial arts and painting classes introduce students to traditional crafts such as rangoli, mandala, and tribal painting. These programs encourage creative exploration and cultural appreciation, inspiring young artists to master techniques passed down through generations and preserve unique art forms.\n\n### Idol Making\nIdol making courses teach methods of sculpting religious and cultural figures from materials like clay or stone, passing on skills rooted in spiritual and artistic traditions. By engaging in idol making, students help sustain cultural rituals and festivals while developing respect for crafts and heritage.\n\n### Cultural Competitions\nCompetitions in dance, music, art, and crafts provide platforms for participants to display their talents, pursue excellence, and celebrate cultural traditions. Awards and recognition inspire skill development and keep classic practices vibrant and dynamic, while promoting wider awareness of cultural diversity.\n\n### Workshops and Seminars\nWorkshops and seminars focus on conserving endangered arts, offering expert-led sessions to discuss the value and revival of forgotten traditions. Through interactive learning, participants gain practical skills and help ensure that diverse cultural arts endure for generations to come.",
           "images": [],
           "donation_target": 20000
         }
