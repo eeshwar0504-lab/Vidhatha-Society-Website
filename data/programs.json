@@ -34,13 +34,14 @@
 
 ,
         {
-          "title": "Other Programs",
-          "slug": "other-programs",
-          "short": "Miscellaneous support activities.",
-          "description": "Additional welfare activities conducted by Vidhatha Society to support various community needs that arise throughout the year.",
-          "images": [],
-          "donation_target": 10000
-        }
+  "title": "Animal Support Programs",
+  "slug": "animal-support-programs",
+  "short": "Protecting and caring for stray, injured, and abandoned animals.",
+  "description": "Animal support programs are dedicated to promoting the safety, well-being, and humane treatment of animals, including both domestic pets and wildlife.\n\nThese efforts involve rescuing injured or abandoned animals, offering shelter and veterinary care, and encouraging adoption to give animals loving homes.\n\nOrganizations also lead campaigns to raise awareness about responsible pet care, the importance of spaying and neutering, and preventing cruelty toward animals.\n\nIn addition to supporting stray and injured animals, animal welfare initiatives protect wildlife and conserve natural habitats, helping to build a kinder, more compassionate society that values every living creature.",
+  "images": [],
+  "donation_target": 50000
+}
+
       ]
     },
 
@@ -194,12 +195,10 @@
       "description": "Community bonding through festivals.",
       "programs": [
         {
-          "title": "Special Day Celebrations",
-          "slug": "special-day-celebrations",
-          "short": "Celebrating festivals and important events.",
-          "description": "We celebrate special days such as Independence Day, festivals, and cultural events to spread joy and unity.",
-          "images": [],
-          "donation_target": 10000
+  "title": "Special Day Celebrations",
+  "slug": "special-day-celebrations",
+  "short": "Celebrating meaningful days to inspire awareness, unity, and social responsibility.",
+  "description": "Special Day Celebrations bring people together to honor and spotlight key causes like World Environment Day, International Women’s Day, and Children’s Day. These occasions feature activities such as tree planting, cultural programs, educational workshops, and community service projects that highlight social, environmental, and humanitarian values.\n\nBy celebrating these days, communities build unity, inspire giving, and motivate people to act for the greater good. These events also recognize achievements and encourage continuous efforts toward positive change.\n\n---\n\n## Spotlight on Key Celebrations\n\n### National Festivals\nMarking occasions like **Independence Day** and **Republic Day** to nurture patriotism and national unity.\n\n### Nutrition Day\nPromoting healthy eating habits and creating awareness of balanced nutrition for better health.\n\n### Cancer Awareness Day\nSharing vital information about preventing, detecting, and treating cancer to support the global fight against the disease.\n\n### Plastic Reduction Day\nAdvocating for sustainable choices and reducing plastic use to protect the environment.\n\n### World Language Day\nCelebrating linguistic diversity and preserving the heritage of different languages and cultures.\n\n### Rashtra Avatarm Day\nHonoring important national milestones and leaders who shaped the nation.\n\n### International and National Days\nObserving global events such as **World Environment Day**, **International Women’s Day**, **World Health Day**, and **Human Rights Day** to address worldwide issues and foster unity.\n\n### Earth Day\nRaising awareness about environmental protection and inspiring sustainable practices for a healthier planet.\n\n### World Water Day\nHighlighting the importance of water conservation and ensuring clean water access for all.\n\n### International Literacy Day\nPromoting literacy and education to empower individuals and reduce poverty.\n\n### World Mental Health Day\nSpreading mental health awareness, breaking stigmas, and offering support to those in need.\n\n### World Yoga Day\nEncouraging holistic wellness through the practice of yoga.\n\n### World Peace Day\nChampioning non-violence, conflict resolution, and global harmony.\n\n### World Environment Day\nA global day of action addressing"
         },
         {
           "title": "Culture, Art and Traditional Programs",
