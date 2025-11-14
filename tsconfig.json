@@ -30,21 +30,19 @@
       }
     ],
     /* ===== Path aliases ===== */
+    "baseUrl": ".",
     "paths": {
-      "@/": [
-        "./"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
-    ".next/types//*.ts",
+    ".next/types/**/*.ts",
     "/*.js",
     "/*.jsx",
     "/*.ts",
     "/*.tsx",
     "app/contact/page.jsx",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
+    "next-env.d.ts"
   ],
   "exclude": [
     "node_modules"

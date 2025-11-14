@@ -21,8 +21,23 @@ export async function POST(request: Request) {
       }
     });
     return NextResponse.json({ order });
-  } catch (err:any) {
-    console.error("Order error:", err);
-    return NextResponse.json({ error: err?.message || "Failed to create order" }, { status: 500 });
+  } catch (err: unknown) {
+  console.error("Order error:", err);
+
+  let message = "Failed to create order";
+  if (err instanceof Error) {
+    message = err.message;
+  } else if (typeof err === "string") {
+    message = err;
+  } else {
+    try {
+      message = JSON.stringify(err);
+    } catch {
+      // keep default message if stringify fails
+    }
   }
+
+  return NextResponse.json({ error: message }, { status: 500 });
+}
+
 }
