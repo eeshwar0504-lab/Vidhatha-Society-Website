@@ -2,11 +2,7 @@
   "compilerOptions": {
     /* ===== Build & language options ===== */
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     /* ===== Allow both JS + TS ===== */
     "allowJs": true,
     "checkJs": false,
@@ -23,28 +19,22 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    /* ===== Next.js plugin ===== */
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     /* ===== Path aliases ===== */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    /* ===== Next.js plugin ===== */
+    "plugins": [{ "name": "next" }]
   },
   "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
     ".next/types/**/*.ts",
-    "/*.js",
-    "/*.jsx",
-    "/*.ts",
-    "/*.tsx",
-    "app/contact/page.jsx",
-    "next-env.d.ts"
+    "types/**/*.d.ts"
   ],
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

@@ -11,13 +11,32 @@ export default function ContactPage() {
     e.preventDefault();
     setStatus("sending");
     try {
-      // mock submit — replace with real API when ready
-      await new Promise((r) => setTimeout(r, 500));
-      setStatus("sent");
-      setName(""); setEmail(""); setMessage("");
-    } catch {
-      setStatus("error");
-    }
+  const res = await fetch("/api/contact", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, message }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed");
+  }
+
+  setStatus("sent");
+  setName("");
+  setEmail("");
+  setMessage("");
+
+  // For Ethereal SMTP preview
+  if (data.previewUrl) {
+    console.log("Ethereal Preview URL:", data.previewUrl);
+  }
+} catch (err) {
+  console.error(err);
+  setStatus("error");
+}
+
   }
 
   return (
