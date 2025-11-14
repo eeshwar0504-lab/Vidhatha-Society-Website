@@ -20,9 +20,23 @@ export async function POST(request: Request) {
     fs.writeFileSync(dataPath, JSON.stringify(arr, null, 2));
 
     return NextResponse.json({ ok:true });
-  } catch (err:any) {
-    console.error("Contact API error:", err);
-    return NextResponse.json({ ok:false, error: err?.message || "Failed" }, { status: 500 });
+  } catch (err: unknown) {
+  console.error("Order error:", err);
+
+  let message = "Failed to  submit contact form";
+  if (err instanceof Error) {
+    message = err.message;
+  } else if (typeof err === "string") {
+    message = err;
+  } else {
+    try {
+      message = JSON.stringify(err);
+    } catch {
+      // keep default message if stringify fails
+    }
   }
+
+  return NextResponse.json({ error: message }, { status: 500 });
+}
 }
 
