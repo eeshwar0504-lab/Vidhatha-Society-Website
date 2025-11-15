@@ -140,8 +140,8 @@ export default function ContactPage() {
 
         <aside className="bg-white p-6 rounded shadow-sm">
           <h2 className="text-lg font-semibold mb-2">Contact Details</h2>
-          <p className="text-sm text-gray-700">Email: <a href="mailto:info@vidhathasociety.com" className="underline">info@vidhathasociety.com</a></p>
-          <p className="text-sm text-gray-700 mt-2">Phone: <a href="tel:+911234567890" className="underline">+91 12345 67890</a></p>
+          <p className="text-sm text-gray-700">Email: <a href="mailto:vidhathasociety@gmail.com" className="underline">vidhathasociety@gmail.com</a></p>
+          <p className="text-sm text-gray-700 mt-2">Phone: <a href="tel:+91 9542366556" className="underline">+91 95423 66556</a></p>
           <p className="text-sm text-gray-700 mt-4">Office Hours: Mon — Sat: 9:30 AM — 6:30 PM</p>
         </aside>
       </div>
