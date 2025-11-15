@@ -11,18 +11,18 @@ export default function ContactPage() {
   const [status, setStatus] = React.useState("idle");
   const [errorText, setErrorText] = React.useState("");
 
+  // NOTE: Make sure Font Awesome CSS is loaded globally (e.g. in app/layout.tsx <head>):
+  // <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+
   function isValidPhone(raw) {
     if (!raw) return false;
-    // normalize: remove spaces, dashes, parentheses
     const normalized = raw.replace(/[()\s-]/g, "");
-    // Accept optional leading +, then 7-15 digits
     return /^\+?\d{7,15}$/.test(normalized);
   }
 
   function validate() {
     if (!name.trim()) return "Name is required";
     if (!email.trim()) return "Email is required";
-    // basic email check
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Enter a valid email";
     if (!phone.trim()) return "Phone number is required";
     if (!isValidPhone(phone.trim())) return "Enter a valid phone number (digits, optional +, 7-15 digits)";
@@ -60,7 +60,6 @@ export default function ContactPage() {
         return;
       }
 
-      // success
       setStatus("sent");
       setName(""); setEmail(""); setPhone(""); setPurpose(""); setOtherReason(""); setMessage("");
       setErrorText("");
@@ -72,9 +71,17 @@ export default function ContactPage() {
     }
   }
 
+  // details (wired from your provided data)
+  const CONTACT_EMAIL = "vidhathasociety@gmail.com";
+  const CONTACT_PHONE = "+919542366556"; // tel link uses international format
+  const DISPLAY_PHONE = "9542366556";
+  const ADDRESS = "Vidhatha Society, Hyderabad, Telangana, India";
+  const mapsUrl = "https://www.google.com/maps/place/Vidhatha+Society/data=!4m2!3m1!1s0x0:0xb614d1ae5750a117?sa=X&ved=1t:2428&ictx=111";
+
+
   return (
     <main className="container mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-4">Contact</h1>
+      <h1 className="text-2xl font-bold mb-6">Contact</h1>
 
       <div className="grid md:grid-cols-2 gap-8">
         <form onSubmit={onSubmit} className="space-y-4 bg-white p-6 rounded shadow-sm">
@@ -139,10 +146,104 @@ export default function ContactPage() {
         </form>
 
         <aside className="bg-white p-6 rounded shadow-sm">
-          <h2 className="text-lg font-semibold mb-2">Contact Details</h2>
-          <p className="text-sm text-gray-700">Email: <a href="mailto:vidhathasociety@gmail.com" className="underline">vidhathasociety@gmail.com</a></p>
-          <p className="text-sm text-gray-700 mt-2">Phone: <a href="tel:+91 9542366556" className="underline">+91 95423 66556</a></p>
-          <p className="text-sm text-gray-700 mt-4">Office Hours: Mon — Sat: 9:30 AM — 6:30 PM</p>
+          <h2 className="text-lg font-semibold mb-3">Contact Details</h2>
+
+          <div className="space-y-2">
+            <div className="text-sm text-gray-600">Email</div>
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-sm text-gray-900 underline">{CONTACT_EMAIL}</a>
+
+            <div className="text-sm text-gray-600 mt-2">Phone</div>
+            <a href={`tel:${CONTACT_PHONE}`} className="text-sm text-gray-900 underline">{DISPLAY_PHONE}</a>
+
+            <div className="text-sm text-gray-600 mt-4">Office Hours</div>
+            <div className="text-sm text-gray-700">Mon — Sat: 9:30 AM — 6:30 PM</div>
+          </div>
+
+          {/* Social icons + address */}
+          <div className="mt-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href="https://www.facebook.com/VidhathaSociety/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-blue-600 hover:text-white transition transform hover:scale-105"
+                title="Facebook"
+              >
+                <i className="fab fa-facebook-f" />
+              </a>
+
+              <a
+                href="https://www.instagram.com/vidhathasociety/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-pink-500 hover:text-white transition transform hover:scale-105"
+                title="Instagram"
+              >
+                <i className="fab fa-instagram" />
+              </a>
+
+              <a
+                href="https://www.linkedin.com/in/vidhatha-society-ngo-aba53732b/"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="LinkedIn"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-blue-700 hover:text-white transition transform hover:scale-105"
+                title="LinkedIn"
+              >
+                <i className="fab fa-linkedin-in" />
+              </a>
+
+              <a
+                href="https://www.youtube.com/@vidhathasociety"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="YouTube"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-red-600 hover:text-white transition transform hover:scale-105"
+                title="YouTube"
+              >
+                <i className="fab fa-youtube" />
+              </a>
+
+              <a
+                href="https://whatsapp.com/channel/0029VavKC8R6hENmCKcOTi1u"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="WhatsApp Channel"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-green-600 hover:text-white transition transform hover:scale-105"
+                title="WhatsApp Channel"
+              >
+                <i className="fas fa-bullhorn" />
+              </a>
+
+              <a
+                href="https://chat.whatsapp.com/J8iWUxXF8XqE9xLVh2IfRi?mode=ems_copy_t"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="WhatsApp Chat"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-green-600 hover:text-white transition transform hover:scale-105"
+                title="WhatsApp Chat"
+              >
+                <i className="fab fa-whatsapp" />
+              </a>
+
+              <a
+                href="https://t.me/vidhathasocietytelegram"
+                target="_blank" rel="noopener noreferrer"
+                aria-label="Telegram"
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-blue-500 hover:text-white transition transform hover:scale-105"
+                title="Telegram"
+              >
+                <i className="fab fa-telegram-plane" />
+              </a>
+            </div>
+
+            <a
+              href={mapsUrl}
+              target="_blank" rel="noopener noreferrer"
+              className="block mt-4 p-3 rounded border border-gray-100 hover:shadow-md transition-colors bg-white"
+              aria-label={`Open address in Google Maps: ${ADDRESS}`}
+              title="Open in Google Maps"
+            >
+              <div className="text-xs text-gray-500">Office Address</div>
+              <div className="text-sm font-semibold text-gray-900">{ADDRESS}</div>
+            </a>
+          </div>
         </aside>
       </div>
     </main>
