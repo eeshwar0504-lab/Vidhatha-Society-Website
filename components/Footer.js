@@ -92,7 +92,7 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Contact</h3>
+            <h3 className="text-white font-bold text-lg mb-4">Phone</h3>
             <ul className="space-y-2 text-sm">
               <li className="flex items-start">
                 <svg className="w-4 h-4 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
