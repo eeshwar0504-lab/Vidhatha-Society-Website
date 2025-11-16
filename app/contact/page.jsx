@@ -253,7 +253,7 @@ export default function ContactPage() {
 
           <p className="text-gray-700 mt-4">
             <strong>Office Hours:</strong><br />
-            Mon–Sat: 9:30 AM — 6:30 PM 
+            Mon–Sat: 9:30 AM — 5:30 PM 
           </p>
 
           {/* Social icons */}
