@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import api from "@/lib/api"; // adjust import path if you don't use tsconfig path aliases
+import api from "@/lib/api"; // if you don't use path alias, change to "../lib/api" or appropriate relative path
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -68,7 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     router.push("/login");
   };
 
-  return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export function useAuth() {

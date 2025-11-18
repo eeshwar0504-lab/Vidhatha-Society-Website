@@ -3,9 +3,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/AuthContext"; // adjust path if needed
+import { AuthProvider, useAuth } from "../../context/AuthContext"; // relative import
 
-export default function LoginPage() {
+function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
 
@@ -18,12 +18,17 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const res = await login(email, password);
-    setBusy(false);
-    if (res.ok) {
-      router.push("/admin/dashboard");
-    } else {
-      setError(res.error || "Login failed");
+    try {
+      const res = await login(email, password);
+      if (res.ok) {
+        router.push("/admin/dashboard");
+      } else {
+        setError(res.error || "Login failed");
+      }
+    } catch (err) {
+      setError(err?.message || "Unexpected error");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -34,16 +39,39 @@ export default function LoginPage() {
         {error && <div className="mb-3 text-sm text-red-600">{error}</div>}
         <label className="block mb-2">
           <span className="text-sm">Email</span>
-          <input className="mt-1 block w-full border rounded p-2" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+          <input
+            className="mt-1 block w-full border rounded p-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            required
+            autoComplete="email"
+          />
         </label>
         <label className="block mb-4">
           <span className="text-sm">Password</span>
-          <input className="mt-1 block w-full border rounded p-2" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required />
+          <input
+            className="mt-1 block w-full border rounded p-2"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+            autoComplete="current-password"
+          />
         </label>
         <button type="submit" disabled={busy} className="w-full p-2 bg-blue-600 text-white rounded">
           {busy ? "Signing in..." : "Sign in"}
         </button>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // wrap the login UI directly with AuthProvider to guarantee context available
+  return (
+    <AuthProvider>
+      <LoginForm />
+    </AuthProvider>
   );
 }
