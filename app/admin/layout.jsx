@@ -1,128 +1,176 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { usePathname } from "next/navigation";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-function Protected({ children }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+/**
+ * Admin layout
+ * Path: /app/admin/layout.jsx
+ *
+ * Features:
+ * - Collapsible sidebar (mobile-friendly)
+ * - Topbar with quick actions
+ * - Breadcrumbs (built from pathname)
+ * - Content wrapper with consistent padding/width
+ * - Slot for toast provider (if present)
+ *
+ * Usage:
+ * Place this file at /app/admin/layout.jsx so it wraps all admin pages.
+ */
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
-  }, [user, loading, router]);
+export default function AdminLayout({ children }) {
+  const pathname = usePathname() || "/admin";
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading...
-      </div>
-    );
-  }
+  // build breadcrumbs from the pathname
+  const breadcrumbs = useMemo(() => {
+    const parts = pathname.split("/").filter(Boolean);
+    const crumbs = [{ label: "Home", href: "/" }];
 
-  if (!user) return null; // while redirecting
+    let accum = "";
+    parts.forEach((part, idx) => {
+      accum += `/${part}`;
+      // nicer label for common admin routes
+      let label = part;
+      if (part === "admin") label = "Admin";
+      if (part === "programs") label = "Programs";
+      if (part === "create") label = "Create";
+      if (part === "edit") label = "Edit";
+      crumbs.push({ label: label.charAt(0).toUpperCase() + label.slice(1), href: accum });
+    });
 
-  return <>{children}</>;
-}
+    return crumbs;
+  }, [pathname]);
 
-function AdminShell({ children }) {
-  const pathname = usePathname();
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const navLinks = [
+    { label: "Dashboard", href: "/admin" },
+    { label: "Programs", href: "/admin/programs" },
+    { label: "Users", href: "/admin/users" },
+    { label: "Payments", href: "/admin/payments" },
+    { label: "Settings", href: "/admin/settings" },
+  ];
+
+  const isActive = (href) => pathname === href || pathname.startsWith(href + "/") || (href === "/admin" && pathname === "/admin");
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      {/* Sidebar - Desktop */}
-      <aside className="w-64 bg-white border-r p-4 hidden md:block">
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-blue-700">Vidhatha Admin</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            {user?.name || user?.email}
-          </p>
-        </div>
+    <ProtectedRoute>
+      <div className="flex min-h-screen bg-gray-50 text-gray-900">
+        {/* Sidebar */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r transition-transform duration-200 ease-in-out transform ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 md:static md:block`}
+          aria-label="Admin sidebar"
+        >
+          <div className="h-full flex flex-col">
+            <div className="px-6 py-4 border-b">
+              <Link href="/admin" className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">V</div>
+                <div>
+                  <div className="text-lg font-semibold">Vidhatha</div>
+                  <div className="text-xs text-gray-500">Admin</div>
+                </div>
+              </Link>
+            </div>
 
-        <nav className="flex flex-col gap-1">
-          <Link
-            href="/admin"
-            className={`p-2 rounded ${
-              pathname === "/admin"
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            Dashboard
-          </Link>
+            <nav className="px-2 py-4 flex-1 overflow-auto">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`block px-3 py-2 rounded-md mb-1 text-sm ${
+                    isActive(link.href) ? "bg-indigo-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  aria-current={isActive(link.href) ? "page" : undefined}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-          <Link
-            href="/admin/programs"
-            className={`p-2 rounded ${
-              pathname.startsWith("/admin/programs")
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            Programs
-          </Link>
-
-          <Link
-            href="/admin/programs/create"
-            className={`p-2 rounded ${
-              pathname === "/admin/programs/create"
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            + Create Program
-          </Link>
-        </nav>
-
-        <div className="mt-6 border-t pt-4">
-          <button
-            onClick={logout}
-            className="w-full px-3 py-2 text-left border rounded text-red-600 hover:bg-red-50"
-          >
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Mobile Header */}
-        <header className="md:hidden bg-white border-b p-3 flex justify-between items-center">
-          <h1 className="text-lg font-semibold">Vidhatha Admin</h1>
-          <div className="flex gap-2">
-            <button
-              className="px-2 py-1 border rounded"
-              onClick={() => router.push("/admin/programs")}
-            >
-              Programs
-            </button>
-            <button
-              onClick={logout}
-              className="px-2 py-1 border rounded text-red-600"
-            >
-              Logout
-            </button>
+            <div className="px-4 py-3 border-t text-sm">
+              <div className="mb-2">Signed in as</div>
+              <div className="font-medium">Admin User</div>
+              <div className="mt-3">
+                <Link href="/" className="text-xs text-blue-600 hover:underline">View site</Link>
+              </div>
+            </div>
           </div>
-        </header>
+        </aside>
 
-        {/* Page Content */}
-        <main className="p-6 flex-1">{children}</main>
+        {/* Overlay when sidebar is open on mobile */}
+        {sidebarOpen && (
+          <button
+            className="fixed inset-0 z-30 md:hidden bg-black/40"
+            aria-label="Close sidebar"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main content area */}
+        <div className="flex-1 md:pl-64">
+          {/* Topbar */}
+          <header className="sticky top-0 z-20 bg-white border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="h-14 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSidebarOpen((v) => !v)}
+                    className="md:hidden inline-flex items-center justify-center p-2 rounded-md border"
+                    aria-label="Toggle sidebar"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M3 5h14v2H3V5zm0 4h14v2H3V9zm0 4h14v2H3v-2z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <div className="text-sm font-medium">Admin Dashboard</div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* placeholder for search or quick actions */}
+                  <div className="hidden sm:block">
+                    <input
+                      type="search"
+                      placeholder="Search admin..."
+                      className="border rounded px-3 py-1 text-sm"
+                      aria-label="Admin search"
+                    />
+                  </div>
+
+                  <div>
+                    <Link href="/" className="text-sm text-blue-600 hover:underline">Visit site</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Breadcrumbs */}
+          <div className="bg-gray-50 border-b">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-gray-600">
+              <nav aria-label="Breadcrumb">
+                <ol className="flex items-center gap-2">
+                  {breadcrumbs.map((c, i) => (
+                    <li key={c.href} className="flex items-center gap-2">
+                      <Link href={c.href} className="hover:underline text-sm">{c.label}</Link>
+                      {i < breadcrumbs.length - 1 && <svg className="h-4 w-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path d="M7.05 4.55L11.5 9 7.05 13.45 8.464 14.864 13.328 9.999 8.464 5.136 7.05 6.55z" /></svg>}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </div>
+          </div>
+
+          {/* Page wrapper with consistent max width and padding */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 min-h-[60vh]">
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
-  );
-}
-
-export default function AdminLayoutWrapper({ children }) {
-  return (
-    <AuthProvider>
-      <Protected>
-        <AdminShell>{children}</AdminShell>
-      </Protected>
-    </AuthProvider>
+    </ProtectedRoute>
   );
 }
