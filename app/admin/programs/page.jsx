@@ -5,25 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { toast } from "@/components/ToastProvider";
 
-/**
- * Admin Programs List Page
- * Path: /app/admin/programs/page.jsx
- *
- * Features:
- * - Search (debounced)
- * - Category filter
- * - Server-side pagination (page, limit)
- * - Loading skeletons, empty state
- * - Delete with confirmation modal
- * - Edit / View actions
- *
- * Notes:
- * - Uses your existing `api` axios instance (assumed to attach auth token).
- * - If your backend supports different query params, adapt the request line where we call api.get('/api/programs', { params: { ... } })
- */
-
-/* ---------- Local project PDF reference (workspace path) ---------- */
+/* ---------- Local project PDF reference ---------- */
 const PROJECT_SUMMARY_PDF = "/mnt/data/Vidhatha_Society_A_to_Z_Summary.pdf";
 
 function SkeletonCard() {
@@ -52,25 +36,20 @@ function EmptyState({ onCreate }) {
 export default function AdminProgramsListPage() {
   const router = useRouter();
 
-  // UI state
   const [loading, setLoading] = useState(true);
   const [programs, setPrograms] = useState([]);
   const [error, setError] = useState(null);
 
-  // search/filter/pagination
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(""); // empty = all
+  const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(12);
 
-  // server meta
   const [total, setTotal] = useState(0);
 
-  // delete flow
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // debounce
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -79,10 +58,9 @@ export default function AdminProgramsListPage() {
   }, [page, limit, category]);
 
   useEffect(() => {
-    // debounced search: wait 400ms after user stops typing
     if (searchRef.current) clearTimeout(searchRef.current);
     searchRef.current = setTimeout(() => {
-      setPage(1); // reset to first page on new search
+      setPage(1);
       fetchPrograms(search, category, 1, limit);
     }, 400);
     return () => {
@@ -91,24 +69,19 @@ export default function AdminProgramsListPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  // Fetch programs (supports search/category/page/limit)
   async function fetchPrograms(searchParam = search, categoryParam = category, pageParam = page, limitParam = limit) {
     setLoading(true);
     setError(null);
     try {
-      const params = {
-        page: pageParam,
-        limit: limitParam,
-      };
+      const params = { page: pageParam, limit: limitParam };
       if (searchParam) params.search = searchParam;
       if (categoryParam) params.category = categoryParam;
 
       const res = await api.get("/api/programs", { params });
-      // support multiple shapes: { data: { programs, total } } or { programs: [], total } or res.data.data, etc.
+
       let items = [];
       let totalCount = 0;
 
-      // robust extraction:
       if (Array.isArray(res?.data?.programs)) {
         items = res.data.programs;
         totalCount = res.data.total ?? items.length;
@@ -122,11 +95,9 @@ export default function AdminProgramsListPage() {
         items = res.data.docs;
         totalCount = res.data.totalDocs ?? items.length;
       } else if (res?.data?.program) {
-        // single item wrapped in object — adapt accordingly
         items = Array.isArray(res.data.program) ? res.data.program : [res.data.program];
         totalCount = items.length;
       } else {
-        // fallback: try res.data.data.programs or res.data.data.docs
         items = res?.data?.data?.programs || res?.data?.data?.docs || [];
         totalCount = res?.data?.data?.total || items.length;
       }
@@ -136,6 +107,7 @@ export default function AdminProgramsListPage() {
     } catch (err) {
       console.error("Failed to fetch programs", err);
       setError(err?.response?.data?.message || err?.message || "Failed to fetch programs");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to fetch programs");
       setPrograms([]);
       setTotal(0);
     } finally {
@@ -143,7 +115,6 @@ export default function AdminProgramsListPage() {
     }
   }
 
-  // Delete program
   const confirmDelete = (id) => {
     setDeleteId(id);
   };
@@ -153,30 +124,29 @@ export default function AdminProgramsListPage() {
     setDeleting(true);
     try {
       await api.delete(`/api/programs/${deleteId}`);
-      // optimistic refresh: remove locally instead of re-fetching entire list for snappy UI
-      setPrograms((prev) => prev.filter((p) => p._id !== deleteId && p.id !== deleteId));
+      setPrograms((prev) => prev.filter((p) => (p._id || p.id) !== deleteId));
       setDeleteId(null);
-      // adjust total count
       setTotal((t) => Math.max(0, t - 1));
+      toast.success("Program deleted");
     } catch (err) {
       console.error("Delete failed", err);
-      setError(err?.response?.data?.message || err?.message || "Failed to delete program");
+      const msg = err?.response?.data?.message || err?.message || "Failed to delete program";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setDeleting(false);
     }
   };
 
-  // Helper: navigate to create or edit
   const goToEdit = (idOrSlug) => router.push(`/admin/programs/${idOrSlug}/edit`);
   const goToView = (slugOrId) => router.push(`/programs/${slugOrId}`);
 
-  // Pagination helpers
   const totalPages = Math.max(1, Math.ceil((total || programs.length) / limit));
 
-  // Quick explore sample PDF (opens the local file path in a new tab via the browser adapter)
   const openProjectPdf = () => {
-    // the local workspace path (your environment will map this to a URL)
+    // local path from workspace
     window.open(PROJECT_SUMMARY_PDF, "_blank");
+    toast.info("Opened project summary PDF (local workspace)");
   };
 
   return (
@@ -191,7 +161,6 @@ export default function AdminProgramsListPage() {
           </div>
         </div>
 
-        {/* Search & filters */}
         <div className="flex flex-col md:flex-row md:items-center gap-3 mb-6">
           <div className="flex-1">
             <input
@@ -222,10 +191,8 @@ export default function AdminProgramsListPage() {
           </div>
         </div>
 
-        {/* Error */}
         {error && <div className="mb-4 text-red-600">{error}</div>}
 
-        {/* Content grid or skeleton */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: limit }).map((_, i) => <SkeletonCard key={i} />)}
@@ -236,7 +203,7 @@ export default function AdminProgramsListPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {programs.map((p) => {
-                const id = p._id || p.id || p._doc?._id;
+                const id = p._id || p.id || (p._doc && p._doc._id) || p.slug;
                 const title = p.title || p.name || "Untitled program";
                 const short = p.short || p.shortDescription || p.excerpt || "";
                 const thumb = p.thumbnailUrl || p.imageUrl || (p.images && p.images[0]) || null;
@@ -273,22 +240,20 @@ export default function AdminProgramsListPage() {
               })}
             </div>
 
-            {/* Pagination */}
             <div className="mt-6 flex items-center justify-between">
               <div className="text-sm text-gray-400">
-                Showing page {page} of {totalPages} — {total} programs
+                Showing page {page} of {Math.max(1, Math.ceil((total || programs.length) / limit))} — {total} programs
               </div>
 
               <div className="flex items-center gap-2">
                 <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-3 py-1 border rounded disabled:opacity-50">Previous</button>
                 <div className="px-3 py-1 border rounded">Page {page}</div>
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
+                <button onClick={() => setPage((p) => Math.min(Math.max(1, Math.ceil((total || programs.length) / limit)), p + 1))} disabled={page >= Math.max(1, Math.ceil((total || programs.length) / limit))} className="px-3 py-1 border rounded disabled:opacity-50">Next</button>
               </div>
             </div>
           </>
         )}
 
-        {/* Delete confirmation modal */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteId(null)} />

@@ -4,35 +4,25 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ToastProvider from "@/components/ToastProvider";
 
 /**
- * Admin layout
- * Path: /app/admin/layout.jsx
- *
- * Features:
- * - Collapsible sidebar (mobile-friendly)
- * - Topbar with quick actions
- * - Breadcrumbs (built from pathname)
- * - Content wrapper with consistent padding/width
- * - Slot for toast provider (if present)
- *
- * Usage:
- * Place this file at /app/admin/layout.jsx so it wraps all admin pages.
+ * Admin layout (overwrites /app/admin/layout.jsx)
+ * - includes ToastProvider for global toasts
+ * - sidebar, topbar, breadcrumbs
  */
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname() || "/admin";
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // build breadcrumbs from the pathname
   const breadcrumbs = useMemo(() => {
     const parts = pathname.split("/").filter(Boolean);
     const crumbs = [{ label: "Home", href: "/" }];
 
     let accum = "";
-    parts.forEach((part, idx) => {
+    parts.forEach((part) => {
       accum += `/${part}`;
-      // nicer label for common admin routes
       let label = part;
       if (part === "admin") label = "Admin";
       if (part === "programs") label = "Programs";
@@ -57,7 +47,6 @@ export default function AdminLayout({ children }) {
   return (
     <ProtectedRoute>
       <div className="flex min-h-screen bg-gray-50 text-gray-900">
-        {/* Sidebar */}
         <aside
           className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r transition-transform duration-200 ease-in-out transform ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -100,7 +89,6 @@ export default function AdminLayout({ children }) {
           </div>
         </aside>
 
-        {/* Overlay when sidebar is open on mobile */}
         {sidebarOpen && (
           <button
             className="fixed inset-0 z-30 md:hidden bg-black/40"
@@ -109,9 +97,7 @@ export default function AdminLayout({ children }) {
           />
         )}
 
-        {/* Main content area */}
         <div className="flex-1 md:pl-64">
-          {/* Topbar */}
           <header className="sticky top-0 z-20 bg-white border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="h-14 flex items-center justify-between">
@@ -129,7 +115,6 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {/* placeholder for search or quick actions */}
                   <div className="hidden sm:block">
                     <input
                       type="search"
@@ -147,7 +132,6 @@ export default function AdminLayout({ children }) {
             </div>
           </header>
 
-          {/* Breadcrumbs */}
           <div className="bg-gray-50 border-b">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 text-sm text-gray-600">
               <nav aria-label="Breadcrumb">
@@ -163,13 +147,15 @@ export default function AdminLayout({ children }) {
             </div>
           </div>
 
-          {/* Page wrapper with consistent max width and padding */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="bg-white rounded-lg shadow-sm p-6 min-h-[60vh]">
               {children}
             </div>
           </main>
         </div>
+
+        {/* Toasts */}
+        <ToastProvider />
       </div>
     </ProtectedRoute>
   );
