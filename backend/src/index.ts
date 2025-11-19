@@ -33,7 +33,7 @@ async function start() {
         <li>GET /api/auth/me</li>
         <li>CRUD /api/programs</li>
         <li>CRUD /api/events</li>
-        <li>POST /api/uploads (image uploads)</li>
+        <li>POST /api/uploads (image uploads here)</li>
       </ul>
 
       <p style="color: gray;">Backend running at: http://localhost:${PORT}</p>
