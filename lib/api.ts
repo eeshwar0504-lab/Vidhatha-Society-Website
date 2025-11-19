@@ -1,18 +1,27 @@
 // lib/api.ts
 import axios from "axios";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
+/**
+ * Your backend runs at http://localhost:4000
+ * and exposes routes like:
+ *   POST /api/uploads
+ *   POST /api/auth/login
+ *   CRUD /api/programs
+ */
 const api = axios.create({
-  baseURL,
-  headers: { "Content-Type": "application/json" },
+  baseURL: "http://localhost:4000",   // FIXED — always hit your backend
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
+// Attach token on every request (browser only)
 api.interceptors.request.use((config) => {
-  if (typeof window === "undefined") return config;
-  const token = localStorage.getItem("token");
-  if (token && config.headers) {
-    config.headers["Authorization"] = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
   }
   return config;
 });

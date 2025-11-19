@@ -220,7 +220,7 @@ export default function CreateProgramPage() {
       setImageUploadProgress(0);
       const fd = new FormData();
       fd.append("image", file);
-      const res = await api.post("/api/uploads/single", fd, {
+      const res = await api.post("/api/uploads", fd, {
         headers: { "Content-Type": "multipart/form-data" },
         onUploadProgress: (progressEvent) => {
           try {
