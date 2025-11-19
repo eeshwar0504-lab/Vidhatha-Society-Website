@@ -9,6 +9,9 @@ import authRoutes from "./routes/auth";
 import programsRoutes from "./routes/programs";
 import eventsRoutes from "./routes/events";
 import uploadsRoutes from "./routes/uploads";
+import rolesRoutes from "./routes/roles";
+import rolesAdminRoutes from "./routes/rolesAdmin";
+
 
 async function start() {
   const app = express();
@@ -47,6 +50,9 @@ async function start() {
   app.use("/api/programs", programsRoutes);
   app.use("/api/events", eventsRoutes);
   app.use("/api/uploads", uploadsRoutes);
+  app.use("/api/roles", rolesRoutes);
+ app.use("/api/admin/roles", rolesAdminRoutes);
+
 
   // -------------------------------
   // Serve Uploaded Files (Local Dev)

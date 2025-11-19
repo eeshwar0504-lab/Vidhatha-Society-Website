@@ -22,12 +22,14 @@ const rolesToCreate = [
   {
     key: "content_manager",
     title: "Content Manager",
+    // content managers can create/edit/delete programs and manage blogs, and upload assets
     permissions: [
       "programs:create",
       "programs:edit",
       "programs:delete",
       "blogs:create",
-      "blogs:edit"
+      "blogs:edit",
+      "uploads:create"
     ],
     description: "Manage content"
   },
@@ -52,11 +54,15 @@ async function seed() {
       console.log("Created role:", r.key);
     } else {
       // If role exists, update title/permissions/description to match current config
-      await Role.updateOne({ key: r.key }, { $set: { title: r.title, permissions: r.permissions, description: r.description }});
+      await Role.updateOne(
+        { key: r.key },
+        { $set: { title: r.title, permissions: r.permissions, description: r.description } }
+      );
       console.log("Ensured role up-to-date:", r.key);
     }
   }
 
+  // Ensure we fetch the superadmin role document after upsert
   const superRole = await Role.findOne({ key: "superadmin" });
   if (!superRole) {
     console.error("superadmin role missing after creation. Aborting.");
@@ -67,9 +73,11 @@ async function seed() {
   // Create or ensure admin user
   const existingAdmin = await User.findOne({ email: SUPERADMIN_EMAIL });
   if (existingAdmin) {
-    // If admin exists, ensure they have superadmin role
-    const needsUpdate = String(existingAdmin.role) !== String(superRole._id);
-    if (needsUpdate) {
+    // If admin exists, ensure they have superadmin role + roleKey set
+    const needsRoleUpdate = String(existingAdmin.role) !== String(superRole._id);
+    const needsRoleKeyUpdate = existingAdmin.roleKey !== "superadmin";
+
+    if (needsRoleUpdate || needsRoleKeyUpdate) {
       existingAdmin.role = superRole._id;
       existingAdmin.roleKey = "superadmin";
       await existingAdmin.save();

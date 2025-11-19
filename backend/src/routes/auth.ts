@@ -2,50 +2,69 @@
 
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
 import User from "../models/User";
 import Role, { IRole } from "../models/Role";
 import { signJwt } from "../utils/jwt";
-import { isEmail } from "../utils/validators";
 import { SUPERADMIN_PASSWORD } from "../config";
 import { requireAuth } from "../middleware/auth";
 
 const router = Router();
 
-/**
- * POST /api/auth/register-admin
- * Dev-only registration for superadmin/admin users.
- * Guarded by SUPERADMIN_PASSWORD in dev mode.
- */
+/* -----------------------------------------------------------
+   RATE LIMITER — prevents brute-force login attacks
+----------------------------------------------------------- */
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 6,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many login attempts, try again later" },
+});
+
+/* -----------------------------------------------------------
+   ZOD VALIDATION SCHEMAS
+----------------------------------------------------------- */
+const registerAdminSchema = z.object({
+  secret: z.string(),
+  name: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(6),
+  roleKey: z.string().optional(),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+/* -----------------------------------------------------------
+   POST /api/auth/register-admin
+   Dev-only — creates admin or superadmin user
+   Returns token + user
+----------------------------------------------------------- */
 router.post("/register-admin", async (req: Request, res: Response) => {
   try {
     if (process.env.NODE_ENV === "production") {
       return res.status(403).json({ error: "register-admin disabled in production" });
     }
 
-    const { secret, name, email, password, roleKey } = req.body as {
-      secret?: string;
-      name?: string;
-      email?: string;
-      password?: string;
-      roleKey?: string;
-    };
+    const parsed = registerAdminSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "validation failed", details: parsed.error.flatten() });
+    }
 
-    if (!SUPERADMIN_PASSWORD || secret !== SUPERADMIN_PASSWORD) {
+    const { secret, name, email, password, roleKey } = parsed.data;
+
+    if (secret !== SUPERADMIN_PASSWORD) {
       return res.status(401).json({ error: "invalid or missing dev secret" });
     }
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "name, email, password required" });
-    }
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(409).json({ error: "user already exists" });
 
-    if (!isEmail(email)) return res.status(400).json({ error: "invalid email" });
-
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(409).json({ error: "user already exists" });
-
-    // Proper role typing
     let role: IRole | null = null;
-
     if (roleKey) {
       role = await Role.findOne({ key: roleKey });
       if (!role) return res.status(400).json({ error: `role '${roleKey}' not found` });
@@ -61,7 +80,6 @@ router.post("/register-admin", async (req: Request, res: Response) => {
       role: role ? role._id : undefined,
     });
 
-    // Create access token
     const token = signJwt({
       userId: newUser._id.toString(),
       roleKey: newUser.roleKey,
@@ -83,22 +101,17 @@ router.post("/register-admin", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/auth/login
- * Body: { email, password }
- * Returns: { token, user }
- */
-router.post("/login", async (req: Request, res: Response) => {
+/* -----------------------------------------------------------
+   POST /api/auth/login
+----------------------------------------------------------- */
+router.post("/login", loginLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body as {
-      email?: string;
-      password?: string;
-    };
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "validation failed", details: parsed.error.flatten() });
+    }
 
-    if (!email || !password)
-      return res.status(400).json({ error: "email and password required" });
-
-    if (!isEmail(email)) return res.status(400).json({ error: "invalid email" });
+    const { email, password } = parsed.data;
 
     const user = await User.findOne({ email }).populate("role");
     if (!user) return res.status(401).json({ error: "invalid credentials" });
@@ -129,10 +142,10 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/auth/me
- * Protected by requireAuth
- */
+/* -----------------------------------------------------------
+   GET /api/auth/me
+   Protected route
+----------------------------------------------------------- */
 router.get("/me", requireAuth, async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
