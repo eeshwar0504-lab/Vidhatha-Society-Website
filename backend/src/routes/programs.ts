@@ -1,4 +1,6 @@
+// backend/src/routes/programs.ts
 import { Router } from "express";
+import mongoose from "mongoose";
 import Program from "../models/Program";
 import { slugify } from "../utils/slugify";
 import { requireAdmin } from "../middleware/requireAdmin";
@@ -9,6 +11,7 @@ const router = Router();
 /**
  * GET /api/programs
  * Query: q, page, limit, category
+ * NOTE: returns `items` and also `programs` (same value) for frontend convenience.
  */
 router.get("/", async (req, res) => {
   try {
@@ -32,7 +35,8 @@ router.get("/", async (req, res) => {
       .limit(limit)
       .lean();
 
-    return res.json({ ok: true, total, page, limit, items });
+    // Provide both `items` and `programs` — frontend can use either
+    return res.json({ ok: true, total, page, limit, items, programs: items });
   } catch (err) {
     console.error("GET /api/programs error:", err);
     return res.status(500).json({ error: "internal" });
@@ -40,23 +44,38 @@ router.get("/", async (req, res) => {
 });
 
 /**
- * GET /api/programs/:slug
+ * GET /api/programs/:slugOrId
+ *
+ * Behaviour:
+ * - If param looks like a Mongo ObjectId -> try findById
+ * - else fallback to slug lookup (existing behaviour)
+ *
+ * This makes GET /api/programs/<id> and GET /api/programs/<slug> both work.
  */
-router.get("/:slug", async (req, res) => {
+router.get("/:slugOrId", async (req, res) => {
   try {
-    const slug = req.params.slug;
-    const program = await Program.findOne({ slug }).lean();
+    const param = String(req.params.slugOrId || "").trim();
+
+    // If param is a valid ObjectId, try findById first
+    if (mongoose.Types.ObjectId.isValid(param)) {
+      const byId = await Program.findById(param).lean();
+      if (byId) {
+        return res.json({ ok: true, program: byId });
+      }
+      // if valid ObjectId but not found, continue to try slug (fallback)
+    }
+
+    // fallback: treat as slug
+    const program = await Program.findOne({ slug: param }).lean();
     if (!program) return res.status(404).json({ error: "not found" });
     return res.json({ ok: true, program });
   } catch (err) {
-    console.error("GET /api/programs/:slug error:", err);
+    console.error("GET /api/programs/:slugOrId error:", err);
     return res.status(500).json({ error: "internal" });
   }
 });
 
-/**
- * POST /api/programs  (admin)
- */
+/* Admin endpoints (unchanged) */
 router.post("/", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { title, short, description, category, images, donation_target } = req.body;
@@ -82,9 +101,6 @@ router.post("/", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * PUT /api/programs/:id  (admin)
- */
 router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const id = req.params.id;
@@ -99,9 +115,6 @@ router.put("/:id", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-/**
- * DELETE /api/programs/:id  (admin)
- */
 router.delete("/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const id = req.params.id;
