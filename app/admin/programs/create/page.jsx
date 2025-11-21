@@ -1,3 +1,4 @@
+// app/admin/programs/create/page.jsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -16,24 +17,19 @@ import * as ImageExtensionPkg from "@tiptap/extension-image";
 const PROJECT_SUMMARY_PDF = "/mnt/data/Vidhatha_Society_A_to_Z_Summary.pdf";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
-/* ---------- Robust helper to create extensions safely ---------- */
 function makeExt(mod) {
   if (!mod) return null;
-  // If it's the module namespace, prefer default then module itself
   const m = mod.default ?? mod;
-  // If it's callable (factory), call it to get the extension
   if (typeof m === "function") {
     try {
       return m();
     } catch (e) {
-      // calling failed — fall through to return object if possible
+      // fall through
     }
   }
-  // If it's an object (already an extension), return as-is
   return m;
 }
 
-/* ---------- Link modal (small) ---------- */
 function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = true }) {
   const [url, setUrl] = useState(initialUrl || "");
   const [newTab, setNewTab] = useState(initialNewTab);
@@ -83,7 +79,6 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
   );
 }
 
-/* ---------- Toolbar component ---------- */
 function Toolbar({ editor, onImageUpload }) {
   if (!editor) return null;
   const [linkModalOpen, setLinkModalOpen] = useState(false);
@@ -143,7 +138,6 @@ function Toolbar({ editor, onImageUpload }) {
   );
 }
 
-/* ---------- Create Program Page ---------- */
 export default function CreateProgramPage() {
   const router = useRouter();
 
@@ -169,7 +163,6 @@ export default function CreateProgramPage() {
       makeExt(UnderlinePkg),
       (function () {
         const m = LinkExtensionPkg.default ?? LinkExtensionPkg;
-        // Link extension needs configure call if available
         if (m && typeof m.configure === "function") return m.configure({ openOnClick: true });
         return makeExt(m);
       })(),
@@ -204,7 +197,7 @@ export default function CreateProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper ---------- */
+  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file") ---------- */
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     if (!file.type || !file.type.startsWith("image/")) {
@@ -215,36 +208,68 @@ export default function CreateProgramPage() {
       toast.error("Image too large. Max size is 5 MB.");
       return null;
     }
+
+    const ENDPOINT = "/api/uploads";
+    setImageUploading(true);
+    setImageUploadProgress(0);
+
     try {
-      setImageUploading(true);
-      setImageUploadProgress(0);
       const fd = new FormData();
-      fd.append("image", file);
-      const res = await api.post("/api/uploads", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (progressEvent) => {
+      fd.append("file", file, file.name); // backend expects field "file"
+
+      // Debugging lines (optional) - safe to leave
+      console.info("DEBUG: fd.get('file') =>", fd.get("file"));
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        console.info("DEBUG: token present?:", !!token, token ? (token.length > 20 ? token.slice(0, 20) + "..." : token) : null);
+      } catch (e) {
+        console.warn("DEBUG: failed reading token", e);
+      }
+
+      // IMPORTANT: do not set Content-Type here — axios/lib/api will let browser set it.
+      const res = await api.post(ENDPOINT, fd, {
+        timeout: 30000,
+        onUploadProgress: (p) => {
           try {
-            const pct = Math.round((progressEvent.loaded * 100) / (progressEvent.total || file.size));
+            const loaded = p?.loaded ?? 0;
+            const total = p?.total ?? file.size ?? 0;
+            const pct = total ? Math.round((loaded * 100) / total) : 0;
             setImageUploadProgress(pct);
           } catch {}
         },
       });
-      const url =
-        res?.data?.url ||
-        res?.data?.secure_url ||
-        res?.data?.data?.url ||
-        res?.data?.result?.secure_url ||
-        res?.data?.file?.secure_url ||
-        null;
+
+      const data = res?.data ?? {};
+      const url = data.url || data.fileUrl || data.path || data.location || null;
+
+      if (!url) {
+        console.error("Upload succeeded but server returned no URL:", data);
+        toast.error("Upload succeeded but server returned no URL. Check server response.");
+        return null;
+      }
+
       setImageUploadProgress(0);
-      if (!url) toast.error("Upload returned unexpected response");
       return url;
     } catch (err) {
-      console.error("Upload failed:", err);
-      toast.error("Image upload failed");
-      setImageUploadProgress(0);
+      console.error("Upload error details:", {
+        message: err?.message,
+        response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
+        request: err?.request,
+      });
+
+      if (err?.response?.data) {
+        const body = err.response.data;
+        const serverMsg = body.message || body.error || JSON.stringify(body);
+        toast.error(serverMsg || "Upload failed (server error)");
+      } else if (err?.request) {
+        toast.error("Network/CORS error: failed to contact upload server. Check backend is running and CORS allows this origin.");
+      } else {
+        toast.error(err?.message || "Image upload failed");
+      }
+
       return null;
     } finally {
+      setImageUploadProgress(0);
       setImageUploading(false);
     }
   };
@@ -284,11 +309,17 @@ export default function CreateProgramPage() {
       let finalImageUrl = imageUrl;
       if (imageFile) {
         const uploaded = await uploadImageToServer(imageFile);
-        if (!uploaded) throw new Error("Image upload failed");
+        if (!uploaded) {
+          const msg = "Image upload failed — program not created.";
+          setErr(msg);
+          toast.error(msg);
+          setSaving(false);
+          return;
+        }
         finalImageUrl = uploaded;
       }
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+      const payload = { title, category, short:shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {

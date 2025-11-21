@@ -16,6 +16,7 @@ import * as ImageExtensionPkg from "@tiptap/extension-image";
 
 /* ---------- Constants ---------- */
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+export const TEST_FILE_PATH = "/mnt/data/87fda3cf-c54a-4bf6-852d-8b2e27b20f76.png";
 
 /* ---------- Helper (same as Create page) ---------- */
 function makeExt(mod) {
@@ -277,7 +278,7 @@ export default function EditProgramPage() {
         }
         try {
           setSaving(true);
-          const payload = { title, category, shortDescription, description: html, imageUrl };
+          const payload = { title, category, short:shortDescription, description: html, imageUrl };
           await api.put(`/api/programs/${id}`, payload, { headers: { "Content-Type": "application/json" } });
           setLastSavedAt(new Date());
         } catch (err) {
@@ -308,7 +309,7 @@ export default function EditProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper ---------- */
+  /* ---------- Upload helper (matches backend) ---------- */
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     if (!file.type || !file.type.startsWith("image/")) {
@@ -322,26 +323,35 @@ export default function EditProgramPage() {
     try {
       setImageUploading(true);
       setImageUploadProgress(0);
+
       const fd = new FormData();
-      fd.append("image", file);
-      const res = await api.post("/api/uploads", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+      fd.append("image", file); // backend expects "image"
+
+      console.info("Uploading to:", (api.defaults.baseURL ?? "") + "/api/uploads/single");
+
+      const res = await api.post("/api/uploads/single", fd, {
         onUploadProgress: (progressEvent) => {
           try {
-            const pct = Math.round((progressEvent.loaded * 100) / (progressEvent.total || file.size));
+            const loaded = progressEvent?.loaded ?? 0;
+            const total = progressEvent?.total ?? file.size ?? 0;
+            const pct = total ? Math.round((loaded * 100) / total) : 0;
             setImageUploadProgress(pct);
           } catch {}
         },
       });
+
       const url =
         res?.data?.url ||
-        res?.data?.secure_url ||
-        res?.data?.data?.url ||
+        res?.data?.fileUrl ||
         res?.data?.result?.secure_url ||
-        res?.data?.file?.secure_url ||
+        res?.data?.data?.url ||
         null;
+
       setImageUploadProgress(0);
-      if (!url) toast.error("Upload returned unexpected response");
+      if (!url) {
+        toast.error("Upload returned unexpected response");
+        return null;
+      }
       return url;
     } catch (err) {
       console.error("Upload failed:", err);
@@ -353,7 +363,7 @@ export default function EditProgramPage() {
     }
   };
 
-  /* ---------- Main image selection ---------- */
+  /* ---------- Main image selection w/ validation ---------- */
   const handleMainImageChange = (e) => {
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
@@ -365,6 +375,7 @@ export default function EditProgramPage() {
       toast.error("Image too large. Max size is 5 MB.");
       return;
     }
+
     setImageFile(f);
     try {
       if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
@@ -372,7 +383,7 @@ export default function EditProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
-  /* ---------- Save handler ---------- */
+  /* ---------- Save handler (manual) ---------- */
   const onSave = async (e) => {
     e?.preventDefault();
     if (!id) {
@@ -386,25 +397,41 @@ export default function EditProgramPage() {
       clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
     }
-
     setSaving(true);
     setErr(null);
 
     try {
       let finalImageUrl = imageUrl;
+
       if (imageFile) {
         const uploaded = await uploadImageToServer(imageFile);
         if (!uploaded) throw new Error("Image upload failed");
         finalImageUrl = uploaded;
       }
+
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
-      const res = await api.put(`/api/programs/${id}`, payload, { headers: { "Content-Type": "application/json" } });
-      const ok = !!res && (Boolean(res?.data?.program) || Boolean(res?.data?.doc) || Boolean(res?.data?.updated) || res.status === 200);
+
+      const payload = {
+        title,
+        category,
+        short:shortDescription,
+        description: descriptionHtml,
+        imageUrl: finalImageUrl,
+      };
+
+      const res = await api.put(`/api/programs/${id}`, payload, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const ok =
+        !!res &&
+        (Boolean(res?.data?.program) || Boolean(res?.data?.doc) || Boolean(res?.data?.updated) || res.status === 200);
+
       if (!ok) {
         console.warn("Unexpected update response:", res?.data);
         throw new Error("Unexpected server response");
       }
+
       setLastSavedAt(new Date());
       toast.success("Program saved");
       router.push("/admin/programs");
@@ -439,7 +466,13 @@ export default function EditProgramPage() {
         <form onSubmit={onSave} className="space-y-6">
           <div>
             <label className="block mb-1 font-medium">Title *</label>
-            <input type="text" className="w-full border p-2 rounded" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input
+              type="text"
+              className="w-full border p-2 rounded"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
           </div>
 
           <div>
@@ -454,7 +487,13 @@ export default function EditProgramPage() {
 
           <div>
             <label className="block mb-1 font-medium">Short Description *</label>
-            <input type="text" className="w-full border p-2 rounded" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
+            <input
+              type="text"
+              className="w-full border p-2 rounded"
+              value={shortDescription}
+              onChange={(e) => setShortDescription(e.target.value)}
+              required
+            />
           </div>
 
           <div>
@@ -462,35 +501,66 @@ export default function EditProgramPage() {
               <label className="block font-medium">Detailed Description</label>
 
               <div className="flex items-center gap-3 text-sm">
-                <label className="flex items-center gap-2"><input type="checkbox" checked={autosaveEnabled} onChange={(e) => setAutosaveEnabled(e.target.checked)} /><span>Autosave</span></label>
-                <button type="button" onClick={() => setPreviewVisible((v) => !v)} className="px-2 py-1 border rounded">{previewVisible ? "Hide Preview" : "Show Preview"}</button>
-                <div className="text-gray-500">{saving ? "Saving..." : lastSavedAt ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}` : "Not saved yet"}</div>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={autosaveEnabled} onChange={(e) => setAutosaveEnabled(e.target.checked)} />
+                  <span>Autosave</span>
+                </label>
+
+                <button type="button" onClick={() => setPreviewVisible((v) => !v)} className="px-2 py-1 border rounded">
+                  {previewVisible ? "Hide Preview" : "Show Preview"}
+                </button>
+
+                <div className="text-gray-500">
+                  {saving ? "Saving..." : lastSavedAt ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}` : "Not saved yet"}
+                </div>
               </div>
             </div>
 
-            <div className="mb-2"><Toolbar editor={editor} onImageUpload={uploadImageToServer} /></div>
+            <div className="mb-2">
+              <Toolbar editor={editor} onImageUpload={uploadImageToServer} />
+            </div>
 
             <div className="border rounded p-3 bg-white min-h-[220px]">
               {editor ? <EditorContent editor={editor} className="prose prose-invert max-w-none" /> : <div>Loading editor...</div>}
             </div>
 
-            {previewVisible && <div className="mt-4 border rounded p-4 bg-gray-50 prose max-w-none"><div dangerouslySetInnerHTML={{ __html: localContent || (editor ? editor.getHTML() : "") }} /></div>}
+            {previewVisible && (
+              <div className="mt-4 border rounded p-4 bg-gray-50 prose max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: localContent || (editor ? editor.getHTML() : "") }} />
+              </div>
+            )}
           </div>
 
           <div>
             <label className="block mb-2 font-medium">Program Image</label>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleMainImageChange} />
-            <div className="mt-3">{previewUrl ? <img src={previewUrl} alt="preview" className="max-h-48 rounded border" /> : <div className="text-sm text-gray-500">No image selected</div>}</div>
+            <div className="mt-3">
+              {previewUrl ? <img src={previewUrl} alt="preview" className="max-h-48 rounded border" /> : <div className="text-sm text-gray-500">No image selected</div>}
+            </div>
 
-            {imageUploading && <div className="mt-2">
-              <div className="text-sm text-gray-600">Uploading: {imageUploadProgress}%</div>
-              <div className="h-2 bg-gray-200 rounded overflow-hidden mt-1"><div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-blue-600" /></div>
-            </div>}
+            {imageUploading && (
+              <div className="mt-2">
+                <div className="text-sm text-gray-600">Uploading: {imageUploadProgress}%</div>
+                <div className="h-2 bg-gray-200 rounded overflow-hidden mt-1">
+                  <div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-blue-600" />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
-            <button type="submit" disabled={saving || imageUploading} className={`px-4 py-2 rounded text-white ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"}`}>{saving ? "Saving..." : imageUploading ? "Uploading image..." : "Save Changes"}</button>
-            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded">Cancel</button>
+            <button
+              type="submit"
+              disabled={saving || imageUploading}
+              className={`px-4 py-2 rounded text-white ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"}`}
+            >
+              {saving ? "Saving..." : imageUploading ? "Uploading image..." : "Save Changes"}
+            </button>
+
+            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded">
+              Cancel
+            </button>
+
             {imageUploading && <div className="text-sm text-gray-500">Image upload in progress...</div>}
           </div>
         </form>
