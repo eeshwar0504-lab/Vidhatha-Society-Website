@@ -1,18 +1,34 @@
 // lib/api.ts
 import axios from "axios";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
+/**
+ * Backend baseURL (your backend runs on localhost:4000)
+ * IMPORTANT: Do NOT set a default Content-Type here so FormData uploads work.
+ */
 const api = axios.create({
-  baseURL,
-  headers: { "Content-Type": "application/json" },
+  baseURL: "http://localhost:4000",
+  // no default Content-Type (let browser set it automatically for FormData)
 });
 
+// Attach token on every request (browser only)
 api.interceptors.request.use((config) => {
-  if (typeof window === "undefined") return config;
-  const token = localStorage.getItem("token");
-  if (token && config.headers) {
-    config.headers["Authorization"] = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token && config.headers) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    // If config.headers contains a Content-Type set globally somewhere else, delete it for FormData auto-handling:
+    // (we keep this safe-guard; it won't break JSON requests)
+    // Note: We only remove content-type when request.data is a FormData instance.
+    try {
+      if (config.data && typeof FormData !== "undefined" && config.data instanceof FormData) {
+        if (config.headers && config.headers["Content-Type"]) {
+          delete config.headers["Content-Type"];
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
   }
   return config;
 });
