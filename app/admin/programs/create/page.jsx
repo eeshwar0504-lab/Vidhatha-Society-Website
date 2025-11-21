@@ -217,7 +217,7 @@ export default function CreateProgramPage() {
       const fd = new FormData();
       fd.append("file", file, file.name); // backend expects field "file"
 
-      // Debugging lines (optional) - safe to leave
+      // helpful debug logs
       console.info("DEBUG: fd.get('file') =>", fd.get("file"));
       try {
         const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -226,7 +226,6 @@ export default function CreateProgramPage() {
         console.warn("DEBUG: failed reading token", e);
       }
 
-      // IMPORTANT: do not set Content-Type here — axios/lib/api will let browser set it.
       const res = await api.post(ENDPOINT, fd, {
         timeout: 30000,
         onUploadProgress: (p) => {
@@ -292,6 +291,7 @@ export default function CreateProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
+  /* ---------- Create handler: send keys backend expects (short, images[]) ---------- */
   const onCreate = async (e) => {
     e?.preventDefault();
     setErr(null);
@@ -318,8 +318,18 @@ export default function CreateProgramPage() {
         }
         finalImageUrl = uploaded;
       }
+
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, short:shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+
+      // <<< IMPORTANT: match backend fields: `short` and `images: string[]` >>>
+      const payload = {
+        title,
+        short: shortDescription,
+        description: descriptionHtml,
+        category,
+        images: finalImageUrl ? [finalImageUrl] : [],
+      };
+
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {

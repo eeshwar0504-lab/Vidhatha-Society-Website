@@ -1,7 +1,8 @@
+// app/programs/[slug]/page.jsx
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Head from "next/head";
 import api from "@/lib/api";
 import Link from "next/link";
@@ -11,14 +12,10 @@ import DOMPurify from "dompurify";
  * Public program detail page
  * Path: /app/programs/[slug]/page.jsx
  *
- * Assumptions:
- * - GET /api/programs/:slug returns a program object (or inside data.program / data.doc)
- * - program fields: title, shortDescription, description (HTML), bannerUrl, gallery (array), imageUrl, slug
- * - api is your axios instance that can be used for public requests too
- *
- * Safety:
- * - Client-side sanitization via DOMPurify before dangerouslySetInnerHTML
- * - Server-side sanitization is still recommended — ensure backend sanitizes HTML too
+ * Changes made:
+ * - Normalizes image URLs (prefixes api.defaults.baseURL if value is relative)
+ * - Hides broken <img> icons and tries a simple fallback for gallery images
+ * - Keeps DOMPurify sanitization for program.description
  */
 
 function Skeleton() {
@@ -36,14 +33,35 @@ function Skeleton() {
   );
 }
 
+/* Helper: build absolute URL for images returned by backend.
+   - If value is already absolute (http/https) return as-is
+   - If value starts with "/" treat as path on backend and prefix baseURL
+   - Else prefix baseURL + "/" + value
+*/
+function toAbsoluteUrl(val) {
+  if (!val) return null;
+  if (/^https?:\/\//i.test(val)) return val;
+
+  const base = api.defaults?.baseURL || "";
+  if (!base) return val; // best-effort if base not configured
+
+  if (val.startsWith("/")) {
+    // value like "/uploads/file.jpg" -> http://localhost:4000/uploads/file.jpg
+    return `${base}${val.startsWith("/") ? "" : "/"}${val}`;
+  }
+  // relative like "uploads/file.jpg" or "file.jpg"
+  return `${base}/${val}`;
+}
+
 export default function ProgramPublicPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params?.slug;
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
   const [program, setProgram] = useState(null);
+  const [bannerUrl, setBannerUrl] = useState(null);
+  const [galleryUrls, setGalleryUrls] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -56,11 +74,28 @@ export default function ProgramPublicPage() {
     (async () => {
       try {
         setLoading(true);
-        const res = await api.get(`/api/programs/${slug}`);
+        const res = await api.get(`/api/programs/${encodeURIComponent(slug)}`);
         const p = res?.data?.program || res?.data?.doc || res?.data || null;
         if (!p) throw new Error("Program not found");
         if (!mounted) return;
+
         setProgram(p);
+
+        // Determine banner (support multiple possible fields)
+        const bannerRaw =
+          p.bannerUrl ||
+          p.imageUrl ||
+          (Array.isArray(p.images) && p.images.length > 0 && p.images[0]) ||
+          null;
+        const absBanner = toAbsoluteUrl(bannerRaw);
+        setBannerUrl(absBanner);
+
+        // Build gallery array from known fields
+        const rawGallery = p.gallery || p.images || (p.imageUrl ? [p.imageUrl] : []) || [];
+        const absGallery = Array.isArray(rawGallery)
+          ? rawGallery.map((v) => toAbsoluteUrl(v)).filter(Boolean)
+          : [];
+        setGalleryUrls(absGallery);
       } catch (e) {
         console.error("Failed to load program:", e);
         if (mounted) setErr(e?.response?.data?.message || e?.message || "Failed to load program");
@@ -69,7 +104,9 @@ export default function ProgramPublicPage() {
       }
     })();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [slug]);
 
   // helper to sanitize HTML before rendering
@@ -113,9 +150,7 @@ export default function ProgramPublicPage() {
 
   const title = program.title || "Program";
   const description = program.shortDescription || program.excerpt || "";
-  const banner = program.bannerUrl || program.imageUrl || (program.images && program.images[0]) || null;
-  // gallery fallback
-  const gallery = program.gallery || program.images || [];
+  const safeHtml = sanitize(program.description || program.content || "");
 
   // copy link helper
   const handleCopyLink = async () => {
@@ -127,23 +162,29 @@ export default function ProgramPublicPage() {
     }
   };
 
-  const safeHtml = sanitize(program.description || program.content || "");
-
   return (
     <>
       <Head>
         <title>{title} — Vidhatha Society</title>
         <meta name="description" content={description || (program.description ? program.description.slice(0, 150) : "")} />
         <meta property="og:title" content={title} />
-        {banner && <meta property="og:image" content={banner} />}
+        {bannerUrl && <meta property="og:image" content={bannerUrl} />}
         <meta property="og:description" content={description} />
       </Head>
 
       <main className="p-6 max-w-4xl mx-auto">
         {/* Banner */}
-        {banner ? (
-          <div className="w-full h-64 rounded-lg overflow-hidden mb-6">
-            <img src={banner} alt={title} className="w-full h-full object-cover" />
+        {bannerUrl ? (
+          <div className="w-full h-64 rounded-lg overflow-hidden mb-6 bg-gray-100">
+            <img
+              src={bannerUrl}
+              alt={title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // hide broken image icon and keep placeholder
+                e.currentTarget.style.display = "none";
+              }}
+            />
           </div>
         ) : null}
 
@@ -155,7 +196,6 @@ export default function ProgramPublicPage() {
           <div className="flex items-center gap-3">
             <Link href={`/programs/${program.slug || program._id || slug}`} className="px-4 py-2 bg-indigo-600 text-white rounded">Learn More</Link>
 
-            {/* CTA examples */}
             <a href={program.joinUrl || "/contact"} className="px-4 py-2 border rounded">Join Program</a>
             <a href={program.donateUrl || "/donate"} className="px-4 py-2 bg-green-600 text-white rounded">Donate</a>
 
@@ -169,13 +209,21 @@ export default function ProgramPublicPage() {
         </article>
 
         {/* Gallery */}
-        {gallery && gallery.length > 0 && (
+        {galleryUrls && galleryUrls.length > 0 && (
           <section className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Gallery</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {gallery.map((img, idx) => (
-                <div key={idx} className="rounded overflow-hidden bg-gray-100">
-                  <img src={img} alt={`${title} image ${idx + 1}`} className="w-full h-48 object-cover" />
+              {galleryUrls.map((imgUrl, idx) => (
+                <div key={idx} className="rounded overflow-hidden bg-gray-100 h-48">
+                  <img
+                    src={imgUrl}
+                    alt={`${title} image ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // hide broken image to avoid broken icon
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
                 </div>
               ))}
             </div>
