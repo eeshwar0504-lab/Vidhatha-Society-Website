@@ -182,7 +182,7 @@ export default function Header() {
 
             <Link href="/events" className={`font-medium ${isActive("/events") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}>Events</Link>
             <Link href="/gallery" className={`font-medium ${isActive("/gallery") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}>Gallery</Link>
-            <Link href="/blog" className={`font-medium ${isActive("/blog") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}>Blog</Link>
+            <Link href="/news" className={`font-medium ${isActive("/news") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}>News</Link>
             <Link href="/contact" className={`font-medium ${isActive("/contact") ? "text-blue-600" : "text-gray-600 hover:text-blue-600"}`}>Contact</Link>
             <Link href="/volunteer" className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">Volunteer</Link>
             <Link href="/donate" className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors">Donate</Link>
