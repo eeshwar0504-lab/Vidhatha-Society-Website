@@ -1,12 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import programsData from "../../data/programs.json";
+import api from "@/lib/api"; // ensure this exists and baseURL = NEXT_PUBLIC_API_URL
+// fallback to static data if you want — optional
+import programsDataFallback from "../../data/programs.json";
 
-
+/* slugify same as before */
 function slugify(text) {
-  return String(text)
+  return String(text || "")
     .toLowerCase()
     .trim()
     .replace(/[’'"]/g, "")
@@ -15,9 +17,77 @@ function slugify(text) {
     .replace(/^-+|-+$/g, "");
 }
 
+/* group flat program list into categories */
+function groupByCategory(programs) {
+  // programs: array of program objects (with category) or old format
+  const map = new Map();
+
+  (programs || []).forEach((p) => {
+    // support old program shapes (string)
+    const title = typeof p === "string" ? p : p.title;
+    const category = (typeof p === "object" && p.category) ? p.category : "Uncategorized";
+    const key = slugify(category);
+
+    if (!map.has(key)) {
+      map.set(key, { key, title: category, description: "", programs: [] });
+    }
+    map.get(key).programs.push(p);
+  });
+
+  // convert to array and keep stable sorting (alphabetical by title)
+  return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+}
+
 export default function ProgramsPage() {
   const [openKey, setOpenKey] = React.useState(null);
-  const categories = programsData?.categories || [];
+  const [categories, setCategories] = useState(() => programsDataFallback?.categories || []);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        // request many items (adjust limit as needed)
+        const res = await api.get("/api/programs?limit=1000");
+        // API returns items in .items (or .programs) per your backend code
+        const items = res?.data?.items ?? res?.data?.programs ?? res?.data ?? [];
+        // items may already be paginated objects
+        const grouped = groupByCategory(items);
+        if (!mounted) return;
+        // If grouped is empty, fallback to static JSON structure
+        if (!grouped || grouped.length === 0) {
+          setCategories(programsDataFallback?.categories || []);
+        } else {
+          setCategories(grouped);
+        }
+      } catch (e) {
+        console.error("Failed to fetch programs:", e);
+        if (mounted) {
+          setErr(e?.response?.data?.error || e?.message || "Failed to load programs");
+          // fallback to static JSON if available
+          setCategories(programsDataFallback?.categories || []);
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="container mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold mb-4 text-gray-900">Our Programs</h1>
+        <p className="text-gray-600 mb-8 max-w-2xl">Loading programs…</p>
+        <div className="space-y-4">
+          <div className="h-6 w-1/3 bg-gray-200 rounded animate-pulse" />
+          <div className="h-40 bg-gray-100 rounded animate-pulse"></div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -25,6 +95,8 @@ export default function ProgramsPage() {
       <p className="text-gray-600 mb-8 max-w-2xl">
         Click a category to view its programs. Click a program to view details and donation options.
       </p>
+
+      {err && <div className="mb-4 text-red-600">Error: {err}</div>}
 
       <div className="space-y-6">
         {categories.map((cat) => {
