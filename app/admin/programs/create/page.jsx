@@ -14,9 +14,11 @@ import * as UnderlinePkg from "@tiptap/extension-underline";
 import * as ImageExtensionPkg from "@tiptap/extension-image";
 
 /* ---------- Constants ---------- */
+// NOTE: this path is the local sandbox path for the uploaded PDF (used per your project instructions)
 const PROJECT_SUMMARY_PDF = "/mnt/data/Vidhatha_Society_A_to_Z_Summary.pdf";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
+/* ---------- Robust helper to create extensions safely ---------- */
 function makeExt(mod) {
   if (!mod) return null;
   const m = mod.default ?? mod;
@@ -30,6 +32,7 @@ function makeExt(mod) {
   return m;
 }
 
+/* ---------- Link modal (small) ---------- */
 function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = true }) {
   const [url, setUrl] = useState(initialUrl || "");
   const [newTab, setNewTab] = useState(initialNewTab);
@@ -79,6 +82,7 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
   );
 }
 
+/* ---------- Toolbar component ---------- */
 function Toolbar({ editor, onImageUpload }) {
   if (!editor) return null;
   const [linkModalOpen, setLinkModalOpen] = useState(false);
@@ -138,6 +142,7 @@ function Toolbar({ editor, onImageUpload }) {
   );
 }
 
+/* ---------- Create Program Page ---------- */
 export default function CreateProgramPage() {
   const router = useRouter();
 
@@ -145,7 +150,7 @@ export default function CreateProgramPage() {
   const [err, setErr] = useState(null);
 
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("education");
+  const [category, setCategory] = useState("social-welfare");
   const [shortDescription, setShortDescription] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -197,7 +202,7 @@ export default function CreateProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file") ---------- */
+  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file", requires auth) ---------- */
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     if (!file.type || !file.type.startsWith("image/")) {
@@ -209,33 +214,27 @@ export default function CreateProgramPage() {
       return null;
     }
 
-    const ENDPOINT = "/api/uploads";
+    const ENDPOINT = "/api/uploads"; // backend expects POST /api/uploads and uses upload.single("file")
     setImageUploading(true);
     setImageUploadProgress(0);
 
     try {
       const fd = new FormData();
-      fd.append("file", file, file.name); // backend expects field "file"
+      fd.append("file", file, file.name); // IMPORTANT: backend uses upload.single("file")
 
-      // helpful debug logs
-      console.info("DEBUG: fd.get('file') =>", fd.get("file"));
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        console.info("DEBUG: token present?:", !!token, token ? (token.length > 20 ? token.slice(0, 20) + "..." : token) : null);
-      } catch (e) {
-        console.warn("DEBUG: failed reading token", e);
-      }
-
+      // axios instance (lib/api.ts) has baseURL = http://localhost:4000 and attaches Authorization header
       const res = await api.post(ENDPOINT, fd, {
         timeout: 30000,
-        onUploadProgress: (p) => {
+        // do NOT set Content-Type manually; axios will set multipart boundary
+        onUploadProgress: (progressEvent) => {
           try {
-            const loaded = p?.loaded ?? 0;
-            const total = p?.total ?? file.size ?? 0;
+            const loaded = progressEvent?.loaded ?? 0;
+            const total = progressEvent?.total ?? file.size ?? 0;
             const pct = total ? Math.round((loaded * 100) / total) : 0;
             setImageUploadProgress(pct);
           } catch {}
         },
+        withCredentials: false, // Authorization header is used; set true only if backend uses cookie auth
       });
 
       const data = res?.data ?? {};
@@ -250,12 +249,14 @@ export default function CreateProgramPage() {
       setImageUploadProgress(0);
       return url;
     } catch (err) {
+      // Detailed error handling so you can see exactly why it failed
       console.error("Upload error details:", {
         message: err?.message,
         response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
         request: err?.request,
       });
 
+      // If server responded with JSON body, show its message
       if (err?.response?.data) {
         const body = err.response.data;
         const serverMsg = body.message || body.error || JSON.stringify(body);
@@ -291,7 +292,7 @@ export default function CreateProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
-  /* ---------- Create handler: send keys backend expects (short, images[]) ---------- */
+  /* ---------- Create handler (won't create if upload failed) ---------- */
   const onCreate = async (e) => {
     e?.preventDefault();
     setErr(null);
@@ -318,18 +319,8 @@ export default function CreateProgramPage() {
         }
         finalImageUrl = uploaded;
       }
-
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-
-      // <<< IMPORTANT: match backend fields: `short` and `images: string[]` >>>
-      const payload = {
-        title,
-        short: shortDescription,
-        description: descriptionHtml,
-        category,
-        images: finalImageUrl ? [finalImageUrl] : [],
-      };
-
+      const payload = { title, category, shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {
@@ -367,10 +358,13 @@ export default function CreateProgramPage() {
           <div>
             <label className="block mb-1 font-medium">Category *</label>
             <select className="w-full border p-2 rounded" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="education">Education</option>
-              <option value="health">Health</option>
-              <option value="awareness">Awareness</option>
-              <option value="environment">Environment</option>
+              <option value="social-welfare">Social Welfare &amp; Humanitarian aid</option>
+              <option value="awareness-education">Awareness &amp; Education</option>
+              <option value="health-wellbeing">Health &amp; Well-Being</option>
+              <option value="senior-special-support">Senior &amp; Special Support</option>
+              <option value="women-youth-child">Women, Youth &amp; Child Empowerment</option>
+              <option value="community-rural-development">Community &amp; Rural Development</option>
+              <option value="celebration-cultural-integration">Celebration &amp; Cultural Integration</option>
             </select>
           </div>
 
