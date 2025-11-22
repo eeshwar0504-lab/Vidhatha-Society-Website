@@ -1,5 +1,6 @@
+// app/donate/books/page.tsx
 import React from "react";
-import Link from "next/link";
+import BooksClient from "./BooksClient";
 
 export const metadata = {
   title: "Books Donation | Vidhatha Society",
@@ -7,6 +8,7 @@ export const metadata = {
 };
 
 export default function DonateBooksPage() {
+  // Keep server-only logic here if needed in future (fetching static props, seo, etc.)
   return (
     <main className="container mx-auto px-4 py-12 space-y-6">
       <header className="space-y-2">
@@ -17,31 +19,18 @@ export default function DonateBooksPage() {
         </p>
       </header>
 
-      <section className="space-y-4">
-        <div className="p-6 border rounded-lg shadow bg-white">
-          <h2 className="text-xl font-semibold">Children Learning Pack</h2>
-          <p className="text-gray-600 mt-2">
-            Set of 3 workbooks designed for early learning development.
-          </p>
-          <button className="mt-4 px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            Buy for ₹300
-          </button>
-        </div>
+      {/* Interactive UI lives in a client component */}
+      <BooksClient />
 
-        <div className="p-6 border rounded-lg shadow bg-white">
-          <h2 className="text-xl font-semibold">Story Book Collection</h2>
-          <p className="text-gray-600 mt-2">
-            Inspiring stories to improve creativity and reading habits.
-          </p>
-          <button className="mt-4 px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            Buy for ₹450
-          </button>
-        </div>
-      </section>
-
-      <Link href="/donate" className="text-blue-600 underline">
-        ← Back to Donate
-      </Link>
+      <footer className="mt-6 text-sm text-gray-600">
+        <p>
+          For download issues, contact{" "}
+          <a href="mailto:hello@vidhatha.org" className="underline text-blue-600">
+            hello@vidhatha.org
+          </a>
+          .
+        </p>
+      </footer>
     </main>
   );
 }
