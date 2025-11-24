@@ -294,7 +294,7 @@ export default function Header() {
                 </div>
               </div>
 
-              <Link
+              {/*<Link
                 href="/events"
                 className={`text-sm font-medium transition hover:-translate-y-0.5 ${
                   isActive("/events")
@@ -303,7 +303,7 @@ export default function Header() {
                 }`}
               >
                 Events
-              </Link>
+              </Link>*/}
               <Link
                 href="/gallery"
                 className={`text-sm font-medium transition hover:-translate-y-0.5 ${
@@ -314,7 +314,7 @@ export default function Header() {
               >
                 Gallery
               </Link>
-              <Link
+              {/* <Link
                 href="/news"
                 className={`text-sm font-medium transition hover:-translate-y-0.5 ${
                   isActive("/news")
@@ -323,7 +323,7 @@ export default function Header() {
                 }`}
               >
                 News
-              </Link>
+              </Link> */}
               <Link
                 href="/contact"
                 className={`text-sm font-medium transition hover:-translate-y-0.5 ${

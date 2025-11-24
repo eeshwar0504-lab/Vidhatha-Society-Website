@@ -85,7 +85,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* View all programs – arrow moves on hover */}
+            {/* View all programs */}
             <Link
               href="/programs"
               className="
@@ -97,9 +97,7 @@ export default function Home() {
               "
             >
               <span>View all programs</span>
-              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
-                →
-              </span>
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">→</span>
             </Link>
           </div>
 
@@ -110,31 +108,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* QUICK LINKS */}
-        <section className="mt-16 md:mt-20 text-center">
-          <div className="inline-flex flex-wrap justify-center gap-3 bg-white/80 border border-gray-100 rounded-2xl px-6 py-4 shadow-sm">
-            {[
-              { href: "/blog", label: "Blog" },
-              { href: "/gallery", label: "Gallery" },
-              { href: "/contact", label: "Contact" },
-            ].map((item, idx) => (
-              <React.Fragment key={item.href}>
-                {idx !== 0 && <span className="text-gray-300">•</span>}
-                <Link
-                  href={item.href}
-                  className="
-                    text-sm md:text-base text-gray-700 font-semibold
-                    transition-all duration-200
-                    hover:text-[#D62828]
-                    hover:-translate-y-0.5
-                  "
-                >
-                  {item.label}
-                </Link>
-              </React.Fragment>
-            ))}
-          </div>
-        </section>
+        {/* QUICK LINKS REMOVED */}
 
       </div>
     </div>
