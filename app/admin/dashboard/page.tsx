@@ -4,87 +4,232 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const stats = {
+    programs: 24,
+    donations: 128,
+    volunteers: 36,
+    pendingApprovals: 3,
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/login");
+    } catch (err) {
+      router.push("/login");
+    }
+  };
 
   return (
-    <div className="p-6">
-      {/* Top Bar */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="min-h-[80vh] p-6 md:p-10 bg-gradient-to-b from-white to-[#FFFBF5]">
+      {/* TOP BAR */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+        <div>
+          <div className="inline-flex items-center gap-3 mb-2">
+            <div className="rounded-full w-12 h-12 bg-gradient-to-br from-[#F2C411] to-[#D62828] shadow-md flex items-center justify-center text-white text-lg font-bold">
+              {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-tight">
+                Admin Dashboard
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Welcome,{" "}
+                <span className="font-medium text-gray-800">
+                  {user?.name || user?.email || "Admin"}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <div className="flex items-center gap-4">
-          <span className="font-medium">
-            Welcome, {user?.name || user?.email}
-          </span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md transition transform hover:-translate-y-0.5"
+          >
+            <svg
+              className="w-4 h-4 text-gray-700"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M3 10.5L12 4l9 6.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M5 21V11h14v10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+            View site
+          </Link>
 
           <button
-            onClick={logout}
-            className="px-4 py-1 rounded border text-red-600 border-red-600 hover:bg-red-600 hover:text-white transition"
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-[#F2C411] to-[#D62828] text-white shadow-md hover:brightness-105 hover:-translate-y-0.5 transform transition"
           >
             Logout
           </button>
         </div>
       </div>
 
-      {/* Grid Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* QUICK STATS */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="p-4 rounded-2xl bg-white shadow hover:shadow-lg transition transform hover:-translate-y-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs text-gray-500">Programs</h3>
+              <div className="mt-2 text-2xl font-extrabold text-gray-900">
+                {stats.programs}
+              </div>
+            </div>
+            <div className="bg-[#E9F5EE] p-3 rounded-lg">
+              <svg
+                className="w-6 h-6 text-[#2E7D32]"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path d="M12 2v20" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 9h14" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Manage all programs.</p>
+        </div>
 
-        {/* Programs Card */}
-        <div className="p-5 border rounded-lg shadow hover:shadow-md transition">
-          <h2 className="text-xl font-semibold mb-2">Programs</h2>
-          <p className="text-gray-600 text-sm mb-3">
-            Manage programs, create new ones, and edit existing initiatives.
-          </p>
+        <div className="p-4 rounded-2xl bg-white shadow hover:shadow-lg transition transform hover:-translate-y-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs text-gray-500">Donations</h3>
+              <div className="mt-2 text-2xl font-extrabold text-gray-900">
+                {stats.donations}
+              </div>
+            </div>
+            <div className="bg-[#FFF3E0] p-3 rounded-lg">
+              <svg
+                className="w-6 h-6 text-[#F57C00]"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path d="M12 8v8" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M8 12h8" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Track donations.</p>
+        </div>
 
-          <div className="flex gap-3">
+        <div className="p-4 rounded-2xl bg-white shadow hover:shadow-lg transition transform hover:-translate-y-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs text-gray-500">Volunteers</h3>
+              <div className="mt-2 text-2xl font-extrabold text-gray-900">
+                {stats.volunteers}
+              </div>
+            </div>
+            <div className="bg-[#E8F0FF] p-3 rounded-lg">
+              <svg
+                className="w-6 h-6 text-[#1D4ED8]"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+                <path
+                  d="M4 20c0-3.31 2.69-6 6-6h4c3.31 0 6 2.69 6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Volunteer overview.</p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white shadow hover:shadow-lg transition transform hover:-translate-y-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xs text-gray-500">Pending</h3>
+              <div className="mt-2 text-2xl font-extrabold text-gray-900">
+                {stats.pendingApprovals}
+              </div>
+            </div>
+            <div className="bg-[#FFF4F4] p-3 rounded-lg">
+              <svg
+                className="w-6 h-6 text-[#D62828]"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M12 6v6l4 2"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="9"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                />
+              </svg>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Pending actions.</p>
+        </div>
+      </section>
+
+      {/* QUICK ACTIONS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2 p-6 bg-white rounded-2xl shadow hover:shadow-lg transition">
+          <h3 className="text-lg font-semibold mb-3">Quick Actions</h3>
+
+          <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/programs"
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              className="px-4 py-2 rounded-lg bg-white border hover:shadow-md transition"
             >
-              View
+              Manage Programs
             </Link>
 
             <Link
-              href="/admin/programs/create"
-              className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              href="/admin/donations"
+              className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-[#F2C411] to-[#D62828] shadow hover:brightness-105 transition"
             >
-              Create
+              Donations
+            </Link>
+
+            <Link
+              href="/admin/volunteers"
+              className="px-4 py-2 rounded-lg bg-white border hover:shadow-md transition"
+            >
+              Volunteers
             </Link>
           </div>
         </div>
 
-        {/* Users Card */}
-        <div className="p-5 border rounded-lg shadow hover:shadow-md transition">
-          <h2 className="text-xl font-semibold mb-2">Users</h2>
-          <p className="text-gray-600 text-sm mb-3">
-            Manage admin users and their roles. (Coming soon)
-          </p>
-
-          <button
-            disabled
-            className="px-3 py-1 bg-gray-400 text-white rounded cursor-not-allowed"
-          >
-            Coming Soon
-          </button>
-        </div>
-
-        {/* Stats Card */}
-        <div className="p-5 border rounded-lg shadow hover:shadow-md transition">
-          <h2 className="text-xl font-semibold mb-2">Statistics</h2>
-          <p className="text-gray-600 text-sm mb-3">
-            View system-wide statistics. (Dev A will provide API Day-2)
-          </p>
-
-          <button
-            disabled
-            className="px-3 py-1 bg-gray-400 text-white rounded cursor-not-allowed"
-          >
-            Coming Soon
-          </button>
-        </div>
-
+        <aside className="p-6 bg-white rounded-2xl shadow hover:shadow-lg transition">
+          <h3 className="text-lg font-semibold mb-3">Admin Tips</h3>
+          <ul className="text-sm text-gray-600 space-y-2">
+            <li>Review pending approvals daily.</li>
+            <li>Keep program descriptions updated.</li>
+            <li>Monitor donation activity.</li>
+          </ul>
+        </aside>
       </div>
     </div>
   );

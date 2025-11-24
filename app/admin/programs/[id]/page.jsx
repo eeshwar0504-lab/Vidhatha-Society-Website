@@ -13,7 +13,14 @@ import LinkExtension from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import ImageExtension from "@tiptap/extension-image";
 
-/* ----- Small Tiptap toolbar used by Edit page ----- */
+/**
+ * Enhanced Admin Program Edit page
+ * - Polished UI: cards, soft shadows, gradients, subtle animations
+ * - Compact toolbar for Tiptap with animated buttons
+ * - Responsive layout, image preview, upload helper
+ */
+
+/* ---------- Small toolbar used by Edit page ---------- */
 function Toolbar({ editor, onImageUpload }) {
   if (!editor) return null;
 
@@ -30,23 +37,28 @@ function Toolbar({ editor, onImageUpload }) {
     input.click();
   };
 
+  const btn =
+    "px-2 py-1 rounded-md text-sm border bg-white/60 hover:scale-[1.03] transition transform";
+
   return (
-    <div className="flex gap-2 mb-3 flex-wrap border p-2 rounded bg-gray-50">
-      <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className="px-2 py-1 border rounded">B</button>
-      <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className="px-2 py-1 border rounded"><i>I</i></button>
-      <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className="px-2 py-1 border rounded"><u>U</u></button>
-      <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className="px-2 py-1 border rounded">H1</button>
-      <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className="px-2 py-1 border rounded">• List</button>
-      <button type="button" onClick={() => {
-        const url = prompt("Enter URL");
-        if (url) editor.chain().focus().setLink({ href: url }).run();
-      }} className="px-2 py-1 border rounded">Link</button>
-      <button type="button" onClick={addImage} className="px-2 py-1 border rounded">Image</button>
+    <div className="flex gap-2 mb-3 flex-wrap items-center">
+      <div className="inline-flex gap-2 p-2 rounded-md bg-gray-50 border shadow-sm">
+        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`${btn} ${editor.isActive("bold") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>B</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${btn} ${editor.isActive("italic") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}><em>I</em></button>
+        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${btn} ${editor.isActive("underline") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}><u>U</u></button>
+        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`${btn} ${editor.isActive("heading", { level: 1 }) ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>H1</button>
+        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${btn} ${editor.isActive("bulletList") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>• List</button>
+        <button type="button" onClick={() => {
+          const url = prompt("Enter URL (include http:// or https://)");
+          if (url) editor.chain().focus().setLink({ href: url }).run();
+        }} className={`${btn}`}>Link</button>
+        <button type="button" onClick={addImage} className={`${btn}`}>Image</button>
+      </div>
     </div>
   );
 }
 
-/* ----- Edit Program Page (client) ----- */
+/* ---------- Page component ---------- */
 export default function EditProgramPage() {
   const router = useRouter();
   const params = useParams();
@@ -63,7 +75,7 @@ export default function EditProgramPage() {
   const [imageFile, setImageFile] = useState(null); // new file to upload
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // TIPTAP editor — avoid SSR hydration issues by setting immediatelyRender:false
+  // Tiptap editor — avoid SSR hydration issues
   const editor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension, ImageExtension],
     content: "",
@@ -80,6 +92,7 @@ export default function EditProgramPage() {
 
     (async () => {
       try {
+        setLoading(true);
         const res = await api.get(`/api/programs/${id}`);
         const program = res?.data?.program || res?.data?.doc || res?.data;
         if (!program) throw new Error("Program not found");
@@ -87,17 +100,15 @@ export default function EditProgramPage() {
         if (!mounted) return;
         setTitle(program.title || "");
         setCategory(program.category || "education");
-        setShortDescription(program.shortDescription || "");
-        setImageUrl(program.imageUrl || null);
-        if (program.imageUrl) setPreviewUrl(program.imageUrl);
+        setShortDescription(program.shortDescription || program.short || "");
+        setImageUrl(program.imageUrl || program.image || null);
+        if (program.imageUrl || program.image) setPreviewUrl(program.imageUrl || program.image);
 
         // set editor content (if editor already initialized)
         if (editor && program.description) {
-          // use a small timeout to ensure editor instance ready
           try {
             editor.commands.setContent(program.description);
           } catch (e) {
-            // fallback: set content once editor becomes available
             setTimeout(() => {
               try { editor.commands.setContent(program.description); } catch (_) {}
             }, 50);
@@ -114,26 +125,43 @@ export default function EditProgramPage() {
     return () => { mounted = false; };
   }, [id, editor]);
 
-  // Upload helper (used for both editor images and main image)
+  // Upload helper (used for editor images and main image)
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     try {
       const fd = new FormData();
-      fd.append("image", file);
-      const res = await api.post("/api/uploads/single", fd, {
+      // backend may expect field name "file" or "image" — try "file" first
+      fd.append("file", file);
+      const res = await api.post("/api/uploads", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      return res?.data?.url || res?.data?.secure_url || res?.data?.data?.url || res?.data?.result?.secure_url || null;
+      return res?.data?.url || res?.data?.fileUrl || res?.data?.path || res?.data?.location || null;
     } catch (e) {
       console.error("Upload failed:", e);
-      return null;
+      // fallback: try alternative endpoint
+      try {
+        const fd2 = new FormData();
+        fd2.append("image", file);
+        const res2 = await api.post("/api/uploads/single", fd2, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        return res2?.data?.url || res2?.data?.secure_url || null;
+      } catch (e2) {
+        console.error("Fallback upload also failed:", e2);
+        return null;
+      }
     }
   };
 
   const handleMainImageChange = (e) => {
     const f = e.target.files?.[0] ?? null;
     setImageFile(f);
-    if (f) setPreviewUrl(URL.createObjectURL(f));
+    if (f) {
+      try {
+        if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+      } catch {}
+      setPreviewUrl(URL.createObjectURL(f));
+    }
   };
 
   const onSave = async (e) => {
@@ -168,11 +196,12 @@ export default function EditProgramPage() {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!res?.data?.program) {
-        console.log("Unexpected update response:", res?.data);
+      if (!res?.data?.program && !res?.data?.ok) {
+        console.warn("Unexpected update response:", res?.data);
         throw new Error("Unexpected server response");
       }
 
+      // nice success animation / feedback might be here (toast handled elsewhere)
       router.push("/admin/programs");
     } catch (e) {
       console.error(e);
@@ -182,55 +211,161 @@ export default function EditProgramPage() {
     }
   };
 
-  if (loading) return <ProtectedRoute><div className="p-6">Loading...</div></ProtectedRoute>;
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 bg-gray-200 rounded w-40" />
+            <div className="h-6 bg-gray-200 rounded w-64" />
+            <div className="h-72 bg-white rounded shadow" />
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      <div className="p-6 max-w-3xl">
-        <h1 className="text-2xl mb-4">Edit Program</h1>
-
-        {err && <div className="mb-3 text-red-600">{err}</div>}
-
-        <form onSubmit={onSave} className="space-y-4">
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="flex items-start justify-between gap-4 mb-6">
           <div>
-            <label className="block mb-1 font-medium">Title *</label>
-            <input className="w-full border p-2 rounded" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <h1 className="text-2xl font-bold tracking-tight">Edit Program</h1>
+            <p className="text-sm text-gray-500 mt-1">Update program details, images and description. Changes will be visible on the public site once saved.</p>
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Category *</label>
-            <select className="w-full border p-2 rounded" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="education">Education</option>
-              <option value="health">Health</option>
-              <option value="awareness">Awareness</option>
-              <option value="environment">Environment</option>
-            </select>
-          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/admin/programs")}
+              className="px-3 py-1 rounded-md border hover:bg-gray-50 transition text-sm"
+            >
+              Back to Programs
+            </button>
 
-          <div>
-            <label className="block mb-1 font-medium">Short Description *</label>
-            <input className="w-full border p-2 rounded" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
+            <button
+              onClick={onSave}
+              disabled={saving}
+              className={`px-4 py-2 rounded-md text-white shadow-sm ${saving ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
           </div>
+        </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Detailed Description</label>
-            <Toolbar editor={editor} onImageUpload={uploadImageToServer} />
-            <div className="border rounded p-2 bg-white min-h-[200px]">
-              {editor ? <EditorContent editor={editor} /> : <div>Loading editor...</div>}
+        {err && <div className="mb-4 text-red-600 rounded p-3 bg-red-50 border border-red-100">{err}</div>}
+
+        <form onSubmit={onSave} className="space-y-6 bg-white p-6 rounded-lg shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            <div className="md:col-span-2">
+              <label className="block mb-1 font-medium">Title *</label>
+              <input
+                className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none transition"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Category *</label>
+              <select
+                className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="education">Education</option>
+                <option value="health">Health</option>
+                <option value="awareness">Awareness</option>
+                <option value="environment">Environment</option>
+                <option value="social-welfare">Social Welfare</option>
+                <option value="community">Community Development</option>
+              </select>
             </div>
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Program Image</label>
-            <input type="file" accept="image/*" onChange={handleMainImageChange} />
-            {previewUrl && <img src={previewUrl} alt="preview" className="mt-2 max-h-40 rounded border" />}
+            <label className="block mb-1 font-medium">Short Description *</label>
+            <input
+              className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none"
+              value={shortDescription}
+              onChange={(e) => setShortDescription(e.target.value)}
+              required
+            />
           </div>
 
           <div>
-            <button disabled={saving} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <label className="block mb-2 font-medium">Detailed Description</label>
+            <Toolbar editor={editor} onImageUpload={uploadImageToServer} />
+            <div className="border rounded p-3 bg-white min-h-[220px] shadow-sm">
+              {editor ? <EditorContent editor={editor} className="prose max-w-none" /> : <div className="text-gray-500">Loading editor...</div>}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            <div className="md:col-span-2">
+              <label className="block mb-1 font-medium">Program Image</label>
+              <div className="flex items-center gap-3">
+                <input type="file" accept="image/*" onChange={handleMainImageChange} className="text-sm" />
+                <div className="text-sm text-gray-500">Accepts JPG, PNG. Max 5 MB</div>
+              </div>
+              <div className="mt-3">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="preview" className="max-h-44 rounded border shadow-sm object-cover" />
+                ) : (
+                  <div className="h-44 rounded border flex items-center justify-center text-gray-400 bg-gray-50">No image selected</div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <div className="rounded-md border p-3 bg-amber-50 text-sm shadow-sm">
+                <div className="font-semibold">Quick Info</div>
+                <div className="text-xs text-gray-600 mt-1">ID: <span className="font-mono text-xs">{id}</span></div>
+                <div className="text-xs text-gray-600 mt-1">Status: <span className="inline-block ml-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">Draft</span></div>
+              </div>
+
+              <div className="rounded-md border p-3 bg-white shadow-sm">
+                <div className="text-sm font-medium mb-2">Actions</div>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm("Are you sure you want to delete this program?")) return;
+                      try {
+                        await api.delete(`/api/programs/${id}`);
+                        router.push("/admin/programs");
+                      } catch (e) {
+                        console.error(e);
+                        setErr(e?.response?.data?.message || e?.message || "Delete failed");
+                      }
+                    }}
+                    className="px-3 py-2 rounded-md text-sm border text-red-600 hover:bg-red-50 transition"
+                  >
+                    Delete Program
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/programs/${id}`)}
+                    className="px-3 py-2 rounded-md text-sm border hover:bg-gray-50 transition"
+                  >
+                    View Public Page
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 justify-end">
+            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded-md hover:bg-gray-50 transition">Cancel</button>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className={`px-4 py-2 rounded-md text-white shadow-sm ${saving ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
+            >
               {saving ? "Saving..." : "Save Changes"}
             </button>
-            <button type="button" onClick={() => router.push("/admin/programs")} className="ml-3 px-4 py-2 border rounded">Cancel</button>
           </div>
         </form>
       </div>

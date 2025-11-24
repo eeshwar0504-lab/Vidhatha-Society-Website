@@ -1,10 +1,10 @@
+// app/admin/programs/create/page.jsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ToastProvider";
 
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -18,7 +18,7 @@ import * as ImageExtensionPkg from "@tiptap/extension-image";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 export const TEST_FILE_PATH = "/mnt/data/87fda3cf-c54a-4bf6-852d-8b2e27b20f76.png";
 
-/* ---------- Helper (same as Create page) ---------- */
+/* ---------- Helper to safely create extensions ---------- */
 function makeExt(mod) {
   if (!mod) return null;
   const m = mod.default ?? mod;
@@ -30,7 +30,7 @@ function makeExt(mod) {
   return m;
 }
 
-/* ---------- LinkModal & Toolbar (same as Create) ---------- */
+/* ---------- Small Link modal used by toolbar ---------- */
 function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = true }) {
   const [url, setUrl] = useState(initialUrl || "");
   const [newTab, setNewTab] = useState(initialNewTab);
@@ -54,7 +54,7 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
           placeholder="https://example.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-100"
         />
         <label className="flex items-center gap-2 mb-3 text-sm">
           <input type="checkbox" checked={newTab} onChange={(e) => setNewTab(e.target.checked)} />
@@ -70,7 +70,7 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
               }
               onInsert({ href: url, newTab });
             }}
-            className="px-3 py-1 rounded bg-blue-600 text-white"
+            className="px-3 py-1 rounded bg-indigo-600 text-white hover:brightness-105 transition"
           >
             Insert
           </button>
@@ -80,6 +80,7 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
   );
 }
 
+/* ---------- Toolbar (compact, styled) ---------- */
 function Toolbar({ editor, onImageUpload }) {
   if (!editor) return null;
   const [linkModalOpen, setLinkModalOpen] = useState(false);
@@ -104,27 +105,29 @@ function Toolbar({ editor, onImageUpload }) {
     else toast.error("Image upload failed");
   };
 
-  const active = (name, opts) => (editor.isActive(name, opts) ? "bg-white/10" : "");
+  const active = (name, opts) => (editor.isActive(name, opts) ? "ring-2 ring-indigo-200 bg-indigo-50" : "");
+
+  const btn = `px-3 py-1 rounded-md text-sm border bg-white/60 hover:scale-[1.03] transition transform`;
 
   return (
     <>
-      <div className="sticky top-4 z-30 bg-black/40 backdrop-blur-sm p-2 rounded-md shadow-sm flex gap-2 flex-wrap items-center">
-        <button aria-label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={`px-3 py-1 rounded ${active("bold")}`}>B</button>
-        <button aria-label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={`px-3 py-1 rounded ${active("italic")}`}><em>I</em></button>
-        <button aria-label="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`px-3 py-1 rounded ${active("underline")}`}><u>U</u></button>
+      <div className="sticky top-4 z-30 bg-white/70 backdrop-blur-sm p-2 rounded-md shadow-sm flex gap-2 flex-wrap items-center">
+        <button aria-label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={`${btn} ${active("bold")}`}>B</button>
+        <button aria-label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${btn} ${active("italic")}`}><em>I</em></button>
+        <button aria-label="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${btn} ${active("underline")}`}><u>U</u></button>
 
-        <button aria-label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`px-3 py-1 rounded ${active("heading", { level: 1 })}`}>H1</button>
-        <button aria-label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-3 py-1 rounded ${active("heading", { level: 2 })}`}>H2</button>
+        <button aria-label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`${btn} ${active("heading", { level: 1 })}`}>H1</button>
+        <button aria-label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`${btn} ${active("heading", { level: 2 })}`}>H2</button>
 
-        <button aria-label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-3 py-1 rounded ${active("bulletList")}`}>• List</button>
-        <button aria-label="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`px-3 py-1 rounded ${active("orderedList")}`}>1. List</button>
+        <button aria-label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${btn} ${active("bulletList")}`}>• List</button>
+        <button aria-label="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`${btn} ${active("orderedList")}`}>1. List</button>
 
-        <button aria-label="Undo" onClick={() => editor.chain().focus().undo().run()} className="px-3 py-1 rounded">Undo</button>
-        <button aria-label="Redo" onClick={() => editor.chain().focus().redo().run()} className="px-3 py-1 rounded">Redo</button>
+        <button aria-label="Undo" onClick={() => editor.chain().focus().undo().run()} className={`${btn}`}>Undo</button>
+        <button aria-label="Redo" onClick={() => editor.chain().focus().redo().run()} className={`${btn}`}>Redo</button>
 
-        <button aria-label="Insert link" onClick={() => setLinkModalOpen(true)} className="px-3 py-1 rounded">Link</button>
+        <button aria-label="Insert link" onClick={() => setLinkModalOpen(true)} className={`${btn}`}>Link</button>
 
-        <button aria-label="Insert image" onClick={() => handleAddImage()} className="px-3 py-1 rounded">Image</button>
+        <button aria-label="Insert image" onClick={() => handleAddImage()} className={`${btn}`}>Image</button>
       </div>
 
       <LinkModal
@@ -139,18 +142,15 @@ function Toolbar({ editor, onImageUpload }) {
   );
 }
 
-/* ---------- Edit Page Component ---------- */
-export default function EditProgramPage() {
+/* ---------- Create Program Page (enhanced UI) ---------- */
+export default function CreateProgramPage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id;
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
 
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("education");
+  const [category, setCategory] = useState("social-welfare");
   const [shortDescription, setShortDescription] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -159,15 +159,8 @@ export default function EditProgramPage() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadProgress, setImageUploadProgress] = useState(0);
 
-  const [fetchedDescription, setFetchedDescription] = useState(null);
-
-  const [autosaveEnabled, setAutosaveEnabled] = useState(true);
-  const [lastSavedAt, setLastSavedAt] = useState(null);
   const [localContent, setLocalContent] = useState("");
   const [previewVisible, setPreviewVisible] = useState(false);
-
-  const autosaveTimerRef = useRef(null);
-  const isManualSaveRef = useRef(false);
 
   const editor = useEditor({
     extensions: [
@@ -187,120 +180,21 @@ export default function EditProgramPage() {
 
   const fileInputRef = useRef(null);
 
-  /* ---------- Fetch program ---------- */
   useEffect(() => {
-    let mounted = true;
-    if (!id) {
-      setErr("Missing program id");
-      setLoading(false);
-      return;
+    if (editor) {
+      setLocalContent(editor.getHTML());
     }
+  }, [editor]);
 
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await api.get(`/api/programs/${id}`);
-        const program = res?.data?.program || res?.data?.doc || res?.data || null;
-        if (!program) throw new Error("Program not found");
-
-        if (!mounted) return;
-
-        setTitle(program.title || "");
-        setCategory(program.category || "education");
-        setShortDescription(program.short || program.shortDescription || program.excerpt || "");
-        const img = program.imageUrl || (program.images && program.images[0]) || null;
-        setImageUrl(img || null);
-        if (img) setPreviewUrl(img);
-
-        const desc = program.description ?? program.content ?? program.body ?? "";
-        setFetchedDescription(desc || "");
-      } catch (e) {
-        console.error(e);
-        if (mounted) {
-          setErr(e?.response?.data?.message || e?.message || "Failed to load program");
-          toast.error(e?.response?.data?.message || e?.message || "Failed to load program");
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-
-    return () => { mounted = false; };
-  }, [id]);
-
-  /* ---------- Apply fetched description ---------- */
-  useEffect(() => {
-    if (!editor || fetchedDescription == null) return;
-    try {
-      if (typeof fetchedDescription === "object") {
-        editor.commands.setContent(fetchedDescription);
-        setLocalContent(editor.getHTML());
-      } else {
-        if (typeof fetchedDescription === "string" && fetchedDescription.trim().startsWith("{")) {
-          try {
-            const parsed = JSON.parse(fetchedDescription);
-            editor.commands.setContent(parsed);
-          } catch {
-            editor.commands.setContent(fetchedDescription);
-          }
-        } else {
-          editor.commands.setContent(fetchedDescription);
-        }
-        setTimeout(() => {
-          try { setLocalContent(editor.getHTML()); } catch { setLocalContent(fetchedDescription || ""); }
-        }, 50);
-      }
-    } catch (err) {
-      console.error("Failed to set editor content:", err);
-      try { editor.commands.setContent(fetchedDescription); } catch (_) {}
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, fetchedDescription]);
-
-  /* ---------- Editor update & autosave ---------- */
   useEffect(() => {
     if (!editor) return;
-    const onUpdate = () => {
-      const html = editor.getHTML();
-      setLocalContent(html);
-
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-
-      if (!autosaveEnabled || saving || imageUploading) return;
-
-      autosaveTimerRef.current = setTimeout(async () => {
-        if (isManualSaveRef.current) {
-          isManualSaveRef.current = false;
-          return;
-        }
-        try {
-          setSaving(true);
-          const payload = { title, category, short:shortDescription, description: html, imageUrl };
-          await api.put(`/api/programs/${id}`, payload, { headers: { "Content-Type": "application/json" } });
-          setLastSavedAt(new Date());
-        } catch (err) {
-          console.error("Autosave failed:", err);
-          toast.error("Autosave failed (network). Changes saved locally.");
-        } finally {
-          setSaving(false);
-        }
-      }, 2000);
+    const handler = () => {
+      setLocalContent(editor.getHTML());
     };
+    editor.on("update", handler);
+    return () => editor.off("update", handler);
+  }, [editor]);
 
-    editor.on("update", onUpdate);
-    return () => {
-      editor.off("update", onUpdate);
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-    };
-  }, [editor, autosaveEnabled, saving, imageUploading, title, category, shortDescription, imageUrl, id]);
-
-  /* ---------- Revoke blob URLs ---------- */
   useEffect(() => {
     return () => {
       try {
@@ -309,7 +203,7 @@ export default function EditProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper (matches backend) ---------- */
+  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file" or "image") ---------- */
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     if (!file.type || !file.type.startsWith("image/")) {
@@ -320,16 +214,17 @@ export default function EditProgramPage() {
       toast.error("Image too large. Max size is 5 MB.");
       return null;
     }
+
+    setImageUploading(true);
+    setImageUploadProgress(0);
+
     try {
-      setImageUploading(true);
-      setImageUploadProgress(0);
-
       const fd = new FormData();
-      fd.append("image", file); // backend expects "image"
-
-      console.info("Uploading to:", (api.defaults.baseURL ?? "") + "/api/uploads/single");
+      // try "image" field which common backends use
+      fd.append("image", file);
 
       const res = await api.post("/api/uploads/single", fd, {
+        timeout: 30000,
         onUploadProgress: (progressEvent) => {
           try {
             const loaded = progressEvent?.loaded ?? 0;
@@ -340,22 +235,36 @@ export default function EditProgramPage() {
         },
       });
 
-      const url =
-        res?.data?.url ||
-        res?.data?.fileUrl ||
-        res?.data?.result?.secure_url ||
-        res?.data?.data?.url ||
-        null;
+      const data = res?.data ?? {};
+      const url = data.url || data.fileUrl || data.path || data.location || null;
 
-      setImageUploadProgress(0);
       if (!url) {
-        toast.error("Upload returned unexpected response");
+        // fallback to other endpoints/fields
+        if (res?.data?.result?.secure_url) return res.data.result.secure_url;
+        console.error("Upload succeeded but server returned no URL:", data);
+        toast.error("Upload succeeded but server returned no URL. Check server response.");
         return null;
       }
+
+      setImageUploadProgress(0);
       return url;
     } catch (err) {
-      console.error("Upload failed:", err);
-      toast.error("Image upload failed");
+      console.error("Upload error details:", {
+        message: err?.message,
+        response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
+        request: err?.request,
+      });
+
+      if (err?.response?.data) {
+        const body = err.response.data;
+        const serverMsg = body.message || body.error || JSON.stringify(body);
+        toast.error(serverMsg || "Upload failed (server error)");
+      } else if (err?.request) {
+        toast.error("Network/CORS error: failed to contact upload server. Check backend is running and CORS allows this origin.");
+      } else {
+        toast.error(err?.message || "Image upload failed");
+      }
+
       setImageUploadProgress(0);
       return null;
     } finally {
@@ -363,7 +272,6 @@ export default function EditProgramPage() {
     }
   };
 
-  /* ---------- Main image selection w/ validation ---------- */
   const handleMainImageChange = (e) => {
     const f = e.target.files?.[0] ?? null;
     if (!f) return;
@@ -375,7 +283,6 @@ export default function EditProgramPage() {
       toast.error("Image too large. Max size is 5 MB.");
       return;
     }
-
     setImageFile(f);
     try {
       if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
@@ -383,61 +290,47 @@ export default function EditProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
-  /* ---------- Save handler (manual) ---------- */
-  const onSave = async (e) => {
+  /* ---------- Create handler ---------- */
+  const onCreate = async (e) => {
     e?.preventDefault();
-    if (!id) {
-      setErr("Missing program id");
-      toast.error("Missing program id");
+    setErr(null);
+    if (!title || title.trim().length < 3) {
+      toast.error("Title must be at least 3 characters.");
+      return;
+    }
+    if (!shortDescription || shortDescription.trim().length < 10) {
+      toast.error("Short description must be at least 10 characters.");
       return;
     }
 
-    isManualSaveRef.current = true;
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-      autosaveTimerRef.current = null;
-    }
     setSaving(true);
-    setErr(null);
-
     try {
       let finalImageUrl = imageUrl;
-
       if (imageFile) {
         const uploaded = await uploadImageToServer(imageFile);
-        if (!uploaded) throw new Error("Image upload failed");
+        if (!uploaded) {
+          const msg = "Image upload failed — program not created.";
+          setErr(msg);
+          toast.error(msg);
+          setSaving(false);
+          return;
+        }
         finalImageUrl = uploaded;
       }
-
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
+      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+      const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
 
-      const payload = {
-        title,
-        category,
-        short:shortDescription,
-        description: descriptionHtml,
-        imageUrl: finalImageUrl,
-      };
-
-      const res = await api.put(`/api/programs/${id}`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const ok =
-        !!res &&
-        (Boolean(res?.data?.program) || Boolean(res?.data?.doc) || Boolean(res?.data?.updated) || res.status === 200);
-
-      if (!ok) {
-        console.warn("Unexpected update response:", res?.data);
+      const created = res?.data?.program || res?.data?.doc || res?.data || null;
+      if (!created) {
+        console.warn("Unexpected create response:", res?.data);
         throw new Error("Unexpected server response");
       }
-
-      setLastSavedAt(new Date());
-      toast.success("Program saved");
+      toast.success("Program created");
       router.push("/admin/programs");
     } catch (error) {
-      console.error("Save failed", error);
-      const msg = error?.response?.data?.message || error?.message || "Failed to update program";
+      console.error("Create failed", error);
+      const msg = error?.response?.data?.message || error?.message || "Failed to create program";
       setErr(msg);
       toast.error(msg);
     } finally {
@@ -445,74 +338,66 @@ export default function EditProgramPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <ProtectedRoute>
-        <div className="p-6">
-          <div className="h-6 w-48 bg-gray-200 rounded mb-4 animate-pulse"></div>
-          <div className="h-40 bg-gray-100 rounded animate-pulse" />
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
   return (
     <ProtectedRoute>
-      <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-4">Edit Program</h1>
-
-        {err && <div className="mb-4 text-red-600">{err}</div>}
-
-        <form onSubmit={onSave} className="space-y-6">
+      <div className="p-6 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="block mb-1 font-medium">Title *</label>
-            <input
-              type="text"
-              className="w-full border p-2 rounded"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+            <h1 className="text-3xl font-bold tracking-tight">Create Program</h1>
+            <p className="text-sm text-gray-600 mt-1">Add a new program. Fill in details, upload an image and publish it to the site.</p>
           </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Category *</label>
-            <select className="w-full border p-2 rounded" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="education">Education</option>
-              <option value="health">Health</option>
-              <option value="awareness">Awareness</option>
-              <option value="environment">Environment</option>
-            </select>
+          <div className="flex items-center gap-3">
+            <a href={TEST_FILE_PATH} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 hover:underline">Project Summary (file)</a>
+            <button
+              onClick={() => router.push("/admin/programs")}
+              className="px-3 py-2 rounded-md border hover:bg-gray-50 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onCreate}
+              disabled={saving || imageUploading}
+              className={`px-4 py-2 rounded-md text-white shadow ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
+            >
+              {saving ? "Creating..." : imageUploading ? "Uploading image..." : "Create Program"}
+            </button>
+          </div>
+        </div>
+
+        {err && <div className="mb-4 text-red-600 rounded p-3 bg-red-50 border border-red-100">{err}</div>}
+
+        <form onSubmit={onCreate} className="space-y-6 bg-white rounded-lg p-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
+              <label className="block mb-1 font-medium">Title *</label>
+              <input type="text" className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none transition" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </div>
+
+            <div>
+              <label className="block mb-1 font-medium">Category *</label>
+              <select className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none" value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="social-welfare">Social Welfare & Humanitarian aid</option>
+                <option value="awareness-education">Awareness & Education</option>
+                <option value="health-wellbeing">Health & Well-Being</option>
+                <option value="senior-special-support">Senior & Special Support</option>
+                <option value="women-youth-child">Women, Youth & Child Empowerment</option>
+                <option value="community-rural-development">Community & Rural Development</option>
+                <option value="celebration-cultural-integration">Celebration & Cultural Integration</option>
+              </select>
+            </div>
           </div>
 
           <div>
             <label className="block mb-1 font-medium">Short Description *</label>
-            <input
-              type="text"
-              className="w-full border p-2 rounded"
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              required
-            />
+            <input type="text" className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block font-medium">Detailed Description</label>
-
-              <div className="flex items-center gap-3 text-sm">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={autosaveEnabled} onChange={(e) => setAutosaveEnabled(e.target.checked)} />
-                  <span>Autosave</span>
-                </label>
-
-                <button type="button" onClick={() => setPreviewVisible((v) => !v)} className="px-2 py-1 border rounded">
-                  {previewVisible ? "Hide Preview" : "Show Preview"}
-                </button>
-
-                <div className="text-gray-500">
-                  {saving ? "Saving..." : lastSavedAt ? `Saved ${formatDistanceToNow(lastSavedAt, { addSuffix: true })}` : "Not saved yet"}
-                </div>
+              <div className="text-sm text-gray-600">
+                Tip: use the toolbar to format content & insert images.
               </div>
             </div>
 
@@ -520,48 +405,80 @@ export default function EditProgramPage() {
               <Toolbar editor={editor} onImageUpload={uploadImageToServer} />
             </div>
 
-            <div className="border rounded p-3 bg-white min-h-[220px]">
-              {editor ? <EditorContent editor={editor} className="prose prose-invert max-w-none" /> : <div>Loading editor...</div>}
+            <div className="border rounded p-3 bg-white min-h-[240px] shadow-sm">
+              {editor ? <EditorContent editor={editor} className="prose max-w-none" /> : <div className="text-gray-500">Loading editor...</div>}
             </div>
 
-            {previewVisible && (
-              <div className="mt-4 border rounded p-4 bg-gray-50 prose max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: localContent || (editor ? editor.getHTML() : "") }} />
-              </div>
-            )}
+            <div className="mt-3 flex items-center gap-3">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" onChange={(e) => setPreviewVisible(e.target.checked)} />
+                <span>Show preview below</span>
+              </label>
+            </div>
+
+            {previewVisible && <div className="mt-4 border rounded p-4 bg-gray-50 prose max-w-none"><div dangerouslySetInnerHTML={{ __html: localContent || (editor ? editor.getHTML() : "") }} /></div>}
           </div>
 
-          <div>
-            <label className="block mb-2 font-medium">Program Image</label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleMainImageChange} />
-            <div className="mt-3">
-              {previewUrl ? <img src={previewUrl} alt="preview" className="max-h-48 rounded border" /> : <div className="text-sm text-gray-500">No image selected</div>}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+            <div className="md:col-span-2">
+              <label className="block mb-2 font-medium">Program Image</label>
+              <div className="flex items-center gap-3">
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="text-sm" />
+                <div className="text-sm text-gray-500">JPG/PNG up to 5MB</div>
+              </div>
 
-            {imageUploading && (
-              <div className="mt-2">
-                <div className="text-sm text-gray-600">Uploading: {imageUploadProgress}%</div>
-                <div className="h-2 bg-gray-200 rounded overflow-hidden mt-1">
-                  <div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-blue-600" />
+              <div className="mt-3">
+                {previewUrl ? (
+                  <img src={previewUrl} alt="preview" className="max-h-44 rounded border shadow-sm object-cover" />
+                ) : (
+                  <div className="h-44 rounded border flex items-center justify-center text-gray-400 bg-gray-50">No image selected</div>
+                )}
+              </div>
+
+              {imageUploading && (
+                <div className="mt-3">
+                  <div className="text-sm text-gray-600 mb-1">Uploading: {imageUploadProgress}%</div>
+                  <div className="h-2 bg-gray-200 rounded overflow-hidden">
+                    <div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-indigo-500 transition-all" />
+                  </div>
                 </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div className="rounded-md border p-3 bg-amber-50 text-sm shadow-sm">
+                <div className="font-semibold">Quick Info</div>
+                <div className="text-xs text-gray-600 mt-1">Templates and examples available.</div>
               </div>
-            )}
+
+              <div className="rounded-md border p-3 bg-white shadow-sm text-sm">
+                <div className="text-sm font-medium mb-2">Actions</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTitle("Sample Program Title");
+                    setShortDescription("A short summary to help you begin quickly.");
+                    if (editor) editor.commands.setContent("<p>Start writing your program details here...</p>");
+                    toast.info("Sample content inserted");
+                  }}
+                  className="px-3 py-2 rounded-md text-sm border hover:bg-gray-50 transition"
+                >
+                  Insert Sample
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-end">
+            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded-md hover:bg-gray-50 transition">Cancel</button>
+
             <button
               type="submit"
               disabled={saving || imageUploading}
-              className={`px-4 py-2 rounded text-white ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"}`}
+              className={`px-4 py-2 rounded-md text-white shadow-sm ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
             >
-              {saving ? "Saving..." : imageUploading ? "Uploading image..." : "Save Changes"}
+              {saving ? "Creating..." : "Create Program"}
             </button>
-
-            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded">
-              Cancel
-            </button>
-
-            {imageUploading && <div className="text-sm text-gray-500">Image upload in progress...</div>}
           </div>
         </form>
       </div>

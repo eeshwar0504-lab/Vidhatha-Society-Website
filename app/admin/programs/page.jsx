@@ -13,25 +13,25 @@ import { toast } from "@/components/ToastProvider";
  * - ensures program image URL is absolute (prefixes api.baseURL when needed)
  * - shows placeholder when no image
  * - supports Edit / View / Delete (DELETE /api/programs/:id)
+ *
+ * UI tweaks:
+ * - smaller action buttons (Draft / Edit / View / Delete)
+ * - hover animations (cards lift & shadow, buttons scale on hover)
+ * - compact layout while retaining responsiveness
  */
 
 function buildAbsoluteUrl(candidate, base) {
   if (!candidate) return null;
-  // candidate may be an object or string (some APIs return { url: '...' })
   if (typeof candidate === "object") {
-    // try common keys
     const keys = ["url", "fileUrl", "path", "location"];
     for (const k of keys) {
       if (candidate[k]) return buildAbsoluteUrl(candidate[k], base);
     }
     return null;
   }
-  // string
   const s = String(candidate).trim();
   if (!s) return null;
-  if (/^https?:\/\//i.test(s)) return s; // already absolute
-  // sometimes returned like uploads/abc.jpg or /uploads/abc.jpg
-  // ensure single slash between base and path
+  if (/^https?:\/\//i.test(s)) return s;
   if (!base) return s.startsWith("/") ? s : `/${s}`;
   const baseNoSlash = base.endsWith("/") ? base.slice(0, -1) : base;
   const pathWithSlash = s.startsWith("/") ? s : `/${s}`;
@@ -39,11 +39,10 @@ function buildAbsoluteUrl(candidate, base) {
 }
 
 function ProgramCard({ program, onDelete }) {
-  const base = api.defaults?.baseURL || ""; // e.g. http://localhost:4000
-  // Try multiple fields that backend might return
+  const base = api.defaults?.baseURL || "";
   const candidates = [
     program?.imageUrl,
-    program?.image, // sometimes single field
+    program?.image,
     (program?.images && program.images[0]) || null,
     program?.thumbnail,
     program?.fileUrl,
@@ -60,26 +59,32 @@ function ProgramCard({ program, onDelete }) {
     }
   }
 
-  // Fallback: if program has media array with objects that include url/path
   if (!imageSrc && Array.isArray(program?.media) && program.media.length > 0) {
     for (const m of program.media) {
       const abs = buildAbsoluteUrl(m?.url || m?.path || m, base);
-      if (abs) { imageSrc = abs; break; }
+      if (abs) {
+        imageSrc = abs;
+        break;
+      }
     }
   }
 
   const title = program?.title || "Untitled program";
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm w-full max-w-xs flex flex-col">
-      <div className="h-40 bg-gray-50 rounded mb-4 flex items-center justify-center overflow-hidden relative">
+    <article
+      className="bg-white rounded-xl p-4 shadow-sm w-full max-w-xs flex flex-col
+                 transform transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg
+                 focus-within:ring-2 focus-within:ring-indigo-200"
+      aria-labelledby={`program-${program._id || program.slug || title}`}
+    >
+      <div className="h-36 bg-gray-50 rounded-lg mb-4 flex items-center justify-center overflow-hidden relative">
         {imageSrc ? (
           <img
             src={imageSrc}
             alt={program.title || "program image"}
             className="object-cover w-full h-full"
             onError={(e) => {
-              // hide broken image and leave placeholder background
               e.currentTarget.style.display = "none";
             }}
           />
@@ -88,40 +93,55 @@ function ProgramCard({ program, onDelete }) {
         )}
       </div>
 
-      <h3 className="text-lg font-semibold mb-1 truncate">{title}</h3>
-      <p className="text-sm text-gray-500 mb-3 line-clamp-2">{program?.short || program?.shortDescription || ""}</p>
+      <h3 id={`program-${program._id || program.slug || title}`} className="text-lg font-semibold mb-1 truncate">
+        {title}
+      </h3>
+      <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+        {program?.short || program?.shortDescription || ""}
+      </p>
 
       <div className="flex items-center gap-2 mt-auto">
-        <span className="px-2 py-1 rounded-full bg-amber-400 text-xs">Draft</span>
+        <span
+          className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 text-xs font-medium
+                     inline-flex items-center justify-center shadow-sm"
+          aria-hidden="true"
+        >
+          Draft
+        </span>
+
         <button
-          className="px-3 py-1 border rounded"
+          className="px-2 py-1 text-xs rounded-md border text-gray-700 hover:scale-105 transform transition
+                     focus:outline-none focus:ring-2 focus:ring-indigo-200"
           onClick={() => {
-            // navigate handled by parent - but keep simple behavior
             const id = program._id || program.id || program.slug;
             window.location.href = `/admin/programs/${id}`;
           }}
+          aria-label={`Edit ${title}`}
         >
           Edit
         </button>
 
         <button
-          className="px-3 py-1 border rounded"
+          className="px-2 py-1 text-xs rounded-md border text-gray-700 hover:scale-105 transform transition"
           onClick={() => {
             const slug = program.slug || program._id || program.id;
             window.open(`/programs/${slug}`, "_blank");
           }}
+          aria-label={`View ${title}`}
         >
           View
         </button>
 
         <button
-          className="px-3 py-1 border rounded text-red-500 ml-auto"
+          className="px-2 py-1 text-xs rounded-md border text-red-500 ml-auto hover:scale-105 transform transition
+                     focus:outline-none focus:ring-2 focus:ring-red-200"
           onClick={() => onDelete(program)}
+          aria-label={`Delete ${title}`}
         >
           Delete
         </button>
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -132,6 +152,7 @@ export default function AdminProgramsPage() {
 
   useEffect(() => {
     fetchPrograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPrograms = async () => {
@@ -139,7 +160,6 @@ export default function AdminProgramsPage() {
     try {
       const res = await api.get("/api/programs?limit=100");
       const data = res?.data ?? {};
-      // backend might return { items: [... ] } or { programs: [...] } or plain array
       const items = data.items || data.programs || (Array.isArray(data) ? data : data);
       setPrograms(Array.isArray(items) ? items : []);
     } catch (err) {
@@ -159,9 +179,7 @@ export default function AdminProgramsPage() {
     if (!confirm(`Are you sure you want to delete "${program.title || id}"? This cannot be undone.`)) return;
 
     try {
-      // call backend
       const res = await api.delete(`/api/programs/${id}`);
-      // treat 200/204 as success
       if (res?.status === 200 || res?.status === 204 || res?.data?.ok) {
         setPrograms((prev) => prev.filter((p) => String((p._id || p.id || p.slug)) !== String(id)));
         toast.success("Program deleted");
@@ -184,11 +202,18 @@ export default function AdminProgramsPage() {
           <div className="flex gap-3">
             <button
               onClick={() => router.push("/admin/programs/create")}
-              className="px-4 py-2 bg-purple-600 text-white rounded"
+              className="px-4 py-2 bg-purple-600 text-white rounded shadow hover:shadow-lg transform hover:-translate-y-0.5 transition"
+              aria-label="Create new program"
             >
               + New Program
             </button>
-            <button onClick={fetchPrograms} className="px-4 py-2 border rounded">Refresh</button>
+            <button
+              onClick={fetchPrograms}
+              className="px-4 py-2 border rounded hover:bg-gray-50 transition"
+              aria-label="Refresh programs"
+            >
+              Refresh
+            </button>
           </div>
         </div>
 
@@ -199,7 +224,10 @@ export default function AdminProgramsPage() {
             className="w-full border p-2 rounded"
             onChange={(e) => {
               const q = (e.target.value || "").trim().toLowerCase();
-              if (!q) { fetchPrograms(); return; }
+              if (!q) {
+                fetchPrograms();
+                return;
+              }
               setPrograms((prev) =>
                 prev.filter((p) => {
                   const title = (p.title || "").toLowerCase();
@@ -208,6 +236,7 @@ export default function AdminProgramsPage() {
                 })
               );
             }}
+            aria-label="Search programs"
           />
         </div>
 

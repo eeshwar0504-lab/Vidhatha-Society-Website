@@ -14,11 +14,11 @@ import * as UnderlinePkg from "@tiptap/extension-underline";
 import * as ImageExtensionPkg from "@tiptap/extension-image";
 
 /* ---------- Constants ---------- */
-// NOTE: this path is the local sandbox path for the uploaded PDF (used per your project instructions)
+// local file provided in project assets (use this exact path)
 const PROJECT_SUMMARY_PDF = "/mnt/data/Vidhatha_Society_A_to_Z_Summary.pdf";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
-/* ---------- Robust helper to create extensions safely ---------- */
+/* ---------- Helpers ---------- */
 function makeExt(mod) {
   if (!mod) return null;
   const m = mod.default ?? mod;
@@ -26,13 +26,13 @@ function makeExt(mod) {
     try {
       return m();
     } catch (e) {
-      // fall through
+      // ignore
     }
   }
   return m;
 }
 
-/* ---------- Link modal (small) ---------- */
+/* ---------- Link Modal ---------- */
 function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = true }) {
   const [url, setUrl] = useState(initialUrl || "");
   const [newTab, setNewTab] = useState(initialNewTab);
@@ -82,10 +82,11 @@ function LinkModal({ open, onClose, onInsert, initialUrl = "", initialNewTab = t
   );
 }
 
-/* ---------- Toolbar component ---------- */
+/* ---------- Toolbar ---------- */
 function Toolbar({ editor, onImageUpload }) {
-  if (!editor) return null;
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+
+  if (!editor) return null;
 
   const handleAddImage = async (file) => {
     if (!file) {
@@ -107,27 +108,29 @@ function Toolbar({ editor, onImageUpload }) {
     else toast.error("Image upload failed");
   };
 
-  const active = (name, opts) => (editor.isActive(name, opts) ? "bg-white/10" : "");
+  const isActive = (name, opts) => editor.isActive(name, opts);
+
+  const btnBase = "px-3 py-1 rounded-md text-sm border bg-white/60 backdrop-blur-sm hover:scale-[1.02] transition";
 
   return (
     <>
-      <div className="sticky top-4 z-30 bg-black/40 backdrop-blur-sm p-2 rounded-md shadow-sm flex gap-2 flex-wrap items-center">
-        <button aria-label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={`px-3 py-1 rounded ${active("bold")}`}>B</button>
-        <button aria-label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={`px-3 py-1 rounded ${active("italic")}`}><em>I</em></button>
-        <button aria-label="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`px-3 py-1 rounded ${active("underline")}`}><u>U</u></button>
+      <div className="sticky top-4 z-30 p-2 rounded-md shadow-sm flex gap-2 flex-wrap items-center bg-white/70 backdrop-blur">
+        <button aria-label="Bold" onClick={() => editor.chain().focus().toggleBold().run()} className={`${btnBase} ${isActive("bold") ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}>B</button>
+        <button aria-label="Italic" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${btnBase} ${isActive("italic") ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}><em>I</em></button>
+        <button aria-label="Underline" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${btnBase} ${isActive("underline") ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}><u>U</u></button>
 
-        <button aria-label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`px-3 py-1 rounded ${active("heading", { level: 1 })}`}>H1</button>
-        <button aria-label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`px-3 py-1 rounded ${active("heading", { level: 2 })}`}>H2</button>
+        <button aria-label="Heading 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`${btnBase} ${isActive("heading", { level: 1 }) ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}>H1</button>
+        <button aria-label="Heading 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} className={`${btnBase} ${isActive("heading", { level: 2 }) ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}>H2</button>
 
-        <button aria-label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`px-3 py-1 rounded ${active("bulletList")}`}>• List</button>
-        <button aria-label="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`px-3 py-1 rounded ${active("orderedList")}`}>1. List</button>
+        <button aria-label="Bullet list" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${btnBase} ${isActive("bulletList") ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}>• List</button>
+        <button aria-label="Ordered list" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={`${btnBase} ${isActive("orderedList") ? "ring-2 ring-indigo-300 bg-indigo-50" : ""}`}>1. List</button>
 
-        <button aria-label="Undo" onClick={() => editor.chain().focus().undo().run()} className="px-3 py-1 rounded">Undo</button>
-        <button aria-label="Redo" onClick={() => editor.chain().focus().redo().run()} className="px-3 py-1 rounded">Redo</button>
+        <button aria-label="Undo" onClick={() => editor.chain().focus().undo().run()} className={`${btnBase}`}>Undo</button>
+        <button aria-label="Redo" onClick={() => editor.chain().focus().redo().run()} className={`${btnBase}`}>Redo</button>
 
-        <button aria-label="Insert link" onClick={() => setLinkModalOpen(true)} className="px-3 py-1 rounded">Link</button>
+        <button aria-label="Insert link" onClick={() => setLinkModalOpen(true)} className={`${btnBase}`}>Link</button>
 
-        <button aria-label="Insert image" onClick={() => handleAddImage()} className="px-3 py-1 rounded">Image</button>
+        <button aria-label="Insert image" onClick={() => handleAddImage()} className={`${btnBase}`}>Image</button>
       </div>
 
       <LinkModal
@@ -181,7 +184,9 @@ export default function CreateProgramPage() {
 
   useEffect(() => {
     if (editor) {
-      setLocalContent(editor.getHTML());
+      try {
+        setLocalContent(editor.getHTML());
+      } catch {}
     }
   }, [editor]);
 
@@ -202,7 +207,7 @@ export default function CreateProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file", requires auth) ---------- */
+  /* ---------- Upload helper ---------- */
   const uploadImageToServer = async (file) => {
     if (!file) return null;
     if (!file.type || !file.type.startsWith("image/")) {
@@ -214,18 +219,16 @@ export default function CreateProgramPage() {
       return null;
     }
 
-    const ENDPOINT = "/api/uploads"; // backend expects POST /api/uploads and uses upload.single("file")
+    const ENDPOINT = "/api/uploads";
     setImageUploading(true);
     setImageUploadProgress(0);
 
     try {
       const fd = new FormData();
-      fd.append("file", file, file.name); // IMPORTANT: backend uses upload.single("file")
+      fd.append("file", file, file.name);
 
-      // axios instance (lib/api.ts) has baseURL = http://localhost:4000 and attaches Authorization header
       const res = await api.post(ENDPOINT, fd, {
         timeout: 30000,
-        // do NOT set Content-Type manually; axios will set multipart boundary
         onUploadProgress: (progressEvent) => {
           try {
             const loaded = progressEvent?.loaded ?? 0;
@@ -234,7 +237,7 @@ export default function CreateProgramPage() {
             setImageUploadProgress(pct);
           } catch {}
         },
-        withCredentials: false, // Authorization header is used; set true only if backend uses cookie auth
+        withCredentials: false,
       });
 
       const data = res?.data ?? {};
@@ -249,14 +252,12 @@ export default function CreateProgramPage() {
       setImageUploadProgress(0);
       return url;
     } catch (err) {
-      // Detailed error handling so you can see exactly why it failed
       console.error("Upload error details:", {
         message: err?.message,
         response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
         request: err?.request,
       });
 
-      // If server responded with JSON body, show its message
       if (err?.response?.data) {
         const body = err.response.data;
         const serverMsg = body.message || body.error || JSON.stringify(body);
@@ -292,7 +293,6 @@ export default function CreateProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
-  /* ---------- Create handler (won't create if upload failed) ---------- */
   const onCreate = async (e) => {
     e?.preventDefault();
     setErr(null);
@@ -320,7 +320,7 @@ export default function CreateProgramPage() {
         finalImageUrl = uploaded;
       }
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, short:shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {
@@ -344,20 +344,20 @@ export default function CreateProgramPage() {
       <div className="p-6 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold">Create Program</h1>
-          <a href={PROJECT_SUMMARY_PDF} target="_blank" rel="noreferrer" className="text-sm text-blue-600">Project Plan (PDF)</a>
+          <a href={PROJECT_SUMMARY_PDF} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline">Project Plan (PDF)</a>
         </div>
 
         {err && <div className="mb-4 text-red-600">{err}</div>}
 
-        <form onSubmit={onCreate} className="space-y-6">
+        <form onSubmit={onCreate} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
           <div>
             <label className="block mb-1 font-medium">Title *</label>
-            <input type="text" className="w-full border p-2 rounded" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <input type="text" className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
 
           <div>
             <label className="block mb-1 font-medium">Category *</label>
-            <select className="w-full border p-2 rounded" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <select className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none" value={category} onChange={(e) => setCategory(e.target.value)}>
               <option value="social-welfare">Social Welfare &amp; Humanitarian aid</option>
               <option value="awareness-education">Awareness &amp; Education</option>
               <option value="health-wellbeing">Health &amp; Well-Being</option>
@@ -370,23 +370,23 @@ export default function CreateProgramPage() {
 
           <div>
             <label className="block mb-1 font-medium">Short Description *</label>
-            <input type="text" className="w-full border p-2 rounded" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
+            <input type="text" className="w-full border p-3 rounded-md focus:ring-2 focus:ring-indigo-100 outline-none" value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} required />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block font-medium">Detailed Description</label>
               <div className="flex items-center gap-3 text-sm">
-                <button type="button" onClick={() => setPreviewVisible(v => !v)} className="px-2 py-1 border rounded">{previewVisible ? "Hide Preview" : "Show Preview"}</button>
+                <button type="button" onClick={() => setPreviewVisible(v => !v)} className="px-2 py-1 border rounded-md hover:bg-gray-50 transition">{previewVisible ? "Hide Preview" : "Show Preview"}</button>
               </div>
             </div>
 
-            <div className="mb-2">
+            <div className="mb-3">
               <Toolbar editor={editor} onImageUpload={uploadImageToServer} />
             </div>
 
             <div className="border rounded p-3 bg-white min-h-[220px]">
-              {editor ? <EditorContent editor={editor} className="prose prose-invert max-w-none" /> : <div>Loading editor...</div>}
+              {editor ? <EditorContent editor={editor} className="prose max-w-none" /> : <div>Loading editor...</div>}
             </div>
 
             {previewVisible && <div className="mt-4 border rounded p-4 bg-gray-50 prose max-w-none"><div dangerouslySetInnerHTML={{ __html: localContent || (editor ? editor.getHTML() : "") }} /></div>}
@@ -394,20 +394,26 @@ export default function CreateProgramPage() {
 
           <div>
             <label className="block mb-2 font-medium">Program Image</label>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleMainImageChange} />
-            <div className="mt-3">{previewUrl ? <img src={previewUrl} alt="preview" className="max-h-48 rounded border" /> : <div className="text-sm text-gray-500">No image selected</div>}</div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleMainImageChange} className="text-sm" />
+            <div className="mt-3">
+              {previewUrl ? <img src={previewUrl} alt="preview" className="max-h-48 rounded border shadow-sm" /> : <div className="text-sm text-gray-500">No image selected</div>}
+            </div>
 
-            {imageUploading && <div className="mt-2">
-              <div className="text-sm text-gray-600">Uploading: {imageUploadProgress}%</div>
-              <div className="h-2 bg-gray-200 rounded overflow-hidden mt-1"><div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-blue-600" /></div>
-            </div>}
+            {imageUploading && (
+              <div className="mt-3">
+                <div className="text-sm text-gray-600 mb-1">Uploading: {imageUploadProgress}%</div>
+                <div className="h-2 bg-gray-200 rounded overflow-hidden">
+                  <div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-gradient-to-r from-indigo-600 to-violet-500 transition-all" />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
-            <button type="submit" disabled={saving || imageUploading} className={`px-4 py-2 rounded text-white ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600"}`}>
+            <button type="submit" disabled={saving || imageUploading} className={`px-4 py-2 rounded-md text-white shadow ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}>
               {saving ? "Creating..." : imageUploading ? "Uploading image..." : "Create Program"}
             </button>
-            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded">Cancel</button>
+            <button type="button" onClick={() => router.push("/admin/programs")} className="px-4 py-2 border rounded-md hover:bg-gray-50 transition">Cancel</button>
           </div>
         </form>
       </div>
