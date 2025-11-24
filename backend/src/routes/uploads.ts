@@ -79,8 +79,8 @@ const storage = multer.diskStorage({
 //   File Filter
 // ---------------------
 const fileFilter: multer.Options["fileFilter"] = (req, file, cb) => {
-  const mimetype = file.mimetype.toLowerCase();
-  const ext = path.extname(file.originalname).toLowerCase();
+  const mimetype = (file.mimetype || "").toLowerCase();
+  const ext = path.extname(file.originalname || "").toLowerCase();
 
   if (!ALLOWED_MIME.has(mimetype)) {
     console.warn("❌ Upload rejected (mime):", mimetype);
@@ -129,5 +129,71 @@ router.post(
     }
   }
 );
+
+/**
+ * New: POST /api/uploads/single
+ * - Accepts common field names: "image", "file", "upload"
+ * - Returns multiple keys: url, fileUrl, path, location, filename
+ * - Normalizes to absolute url if BACKEND_BASE_URL is present
+ * - Keeps same RBAC (requires uploads:create)
+ */
+router.post("/single", requireAuth, requirePermission("uploads:create"), (req: Request, res: Response) => {
+  // accept fields image|file|upload
+  const multi = multer().fields([
+    { name: "image", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+    { name: "upload", maxCount: 1 },
+  ]);
+
+  // Use the same storage & filter but via upload.fields wrapper
+  // We need to call the storage-aware uploader; create an uploader using same storage+filter
+  const uploader = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } }).fields([
+    { name: "image", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+    { name: "upload", maxCount: 1 },
+  ]);
+
+  uploader(req as any, res as any, (err: any) => {
+    try {
+      if (err) {
+        console.error("❌ upload.single (multi-field) error:", err);
+        const message = err?.message || "upload failed";
+        return res.status(400).json({ ok: false, error: message });
+      }
+
+      const files = (req as any).files || {};
+      let f: Express.Multer.File | undefined;
+
+      if (files.image && files.image[0]) f = files.image[0];
+      else if (files.file && files.file[0]) f = files.file[0];
+      else if (files.upload && files.upload[0]) f = files.upload[0];
+
+      if (!f) {
+        return res.status(400).json({ ok: false, error: "No file uploaded (accepted fields: image, file, upload)" });
+      }
+
+      // Build path and absolute URL if possible
+      const relPath = `/uploads/${encodeURIComponent(f.filename)}`;
+      const base = (process.env.BACKEND_BASE_URL || "").replace(/\/$/, "");
+      const url = base ? `${base}${relPath}` : relPath;
+
+      return res.json({
+        ok: true,
+        filename: f.filename,
+        originalname: f.originalname,
+        mimetype: f.mimetype,
+        size: f.size,
+        // provide many keys so older frontends will find what they expect
+        url,
+        fileUrl: url,
+        location: url,
+        path: relPath,
+      });
+    } catch (ex) {
+      console.error("❌ unexpected error in /single:", ex);
+      return res.status(500).json({ ok: false, error: "Internal server error" });
+    }
+  });
+});
 
 export default router;
