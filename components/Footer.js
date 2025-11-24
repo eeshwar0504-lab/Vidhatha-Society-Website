@@ -127,9 +127,9 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/about" className="hover:text-white">About Us</Link></li>
               <li><Link href="/programs" className="hover:text-white">What we do</Link></li>
-              <li><Link href="/events" className="hover:text-white">Events</Link></li>
+              {/* <li><Link href="/events" className="hover:text-white">Events</Link></li> */}
               <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
-              <li><Link href="/news" className="hover:text-white">News</Link></li>
+              {/* <li><Link href="/news" className="hover:text-white">News</Link></li> */}
             </ul>
           </div>
 

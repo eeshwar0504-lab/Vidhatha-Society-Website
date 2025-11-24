@@ -334,7 +334,7 @@ export default function DonationPage() {
       <div className="container mx-auto px-4 py-10 md:py-14">
         {/* Tagline */}
         <div className="inline-flex items-center px-4 py-1 rounded-full bg-gradient-to-r from-[#F2C411] via-[#D62828] to-[#1D3A8A] shadow-sm shadow-[#D62828]/30 text-[11px] font-semibold tracking-[0.18em] text-white uppercase mb-5">
-          Service to Humanity is Service to God
+          Service to Human is Service to God
         </div>
 
         {/* Heading */}
