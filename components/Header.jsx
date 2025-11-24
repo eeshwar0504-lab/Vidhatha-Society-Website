@@ -335,143 +335,165 @@ export default function Header() {
                 Contact
               </Link>
 
-              {/* Volunteer button */}
-              <Link
-                href="/volunteer"
-                className="
-                  px-4 py-2 rounded-full text-sm font-semibold
-                  bg-gradient-to-r from-[#F2C411] to-[#D62828] text-white
-                  shadow-md shadow-[#D62828]/40
-                  hover:brightness-105 hover:-translate-y-0.5
-                  active:translate-y-0
-                  transition
-                "
-              >
-                Volunteer
-              </Link>
-
-              {/* Donate button + dropdown */}
-              <div
-                ref={donateRef}
-                className="relative"
-                onMouseEnter={openDonate}
-                onMouseLeave={closeDonate}
-              >
-                <button
-                  onClick={() => setDonateOpen((s) => !s)}
+              {/* CTA cluster: Volunteer, Donate, Login */}
+              <div className="flex items-center gap-3">
+                {/* Volunteer button */}
+                <Link
+                  href="/volunteer"
                   className="
                     px-4 py-2 rounded-full text-sm font-semibold
-                    bg-[#D62828] text-white hover:bg-[#B71D23]
+                    bg-gradient-to-r from-[#F2C411] to-[#D62828] text-white
                     shadow-md shadow-[#D62828]/40
-                    transition hover:-translate-y-0.5 active:translate-y-0
+                    hover:brightness-105 hover:-translate-y-0.5
+                    active:translate-y-0
+                    transition
                   "
                 >
-                  Donate
-                </button>
+                  Volunteer
+                </Link>
 
+                {/* Donate button + dropdown */}
                 <div
-                  className={`
-                    absolute right-0 top-full mt-3 w-60 bg-white rounded-2xl
-                    shadow-2xl border border-[#F2C411]/40 p-2 text-sm z-[1000]
-                    ${
-                      donateOpen
-                        ? "opacity-100 translate-y-0 visible"
-                        : "opacity-0 -translate-y-2 invisible pointer-events-none"
-                    }
-                  `}
+                  ref={donateRef}
+                  className="relative"
+                  onMouseEnter={openDonate}
+                  onMouseLeave={closeDonate}
                 >
-                  <ul>
-                    <li>
-                      <Link
-                        href={DONATE_LINKS.donations}
-                        className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
-                        onClick={() => {
-                          setDonateOpen(false);
-                          setDonateSubOpen(false);
-                        }}
-                      >
-                        Donations
-                      </Link>
-                    </li>
+                  <button
+                    onClick={() => setDonateOpen((s) => !s)}
+                    className="
+                      px-4 py-2 rounded-full text-sm font-semibold
+                      bg-[#D62828] text-white hover:bg-[#B71D23]
+                      shadow-md shadow-[#D62828]/40
+                      transition hover:-translate-y-0.5 active:translate-y-0
+                    "
+                  >
+                    Donate
+                  </button>
 
-                    <li
-                      className="relative"
-                      onMouseEnter={openDonateSub}
-                      onMouseLeave={closeDonateSub}
-                    >
-                      <div className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#FFF8E1] cursor-pointer">
-                        <Link href={DONATE_LINKS.products} className="flex-1">
-                          Donate by Purchase
+                  <div
+                    className={`
+                      absolute right-0 top-full mt-3 w-60 bg-white rounded-2xl
+                      shadow-2xl border border-[#F2C411]/40 p-2 text-sm z-[1000]
+                      ${
+                        donateOpen
+                          ? "opacity-100 translate-y-0 visible"
+                          : "opacity-0 -translate-y-2 invisible pointer-events-none"
+                      }
+                    `}
+                  >
+                    <ul>
+                      <li>
+                        <Link
+                          href={DONATE_LINKS.donations}
+                          className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
+                          onClick={() => {
+                            setDonateOpen(false);
+                            setDonateSubOpen(false);
+                          }}
+                        >
+                          Donations
                         </Link>
-                        <span className="text-xs text-gray-500">▶</span>
-                      </div>
+                      </li>
 
-                      {/* SUBMENU: opens to the LEFT */}
-                      <div
-                        className={`
-                          absolute right-full top-0 mr-2 w-52 bg-white
-                          rounded-2xl shadow-2xl border border-[#F2C411]/40 p-2
-                          ${
-                            donateSubOpen
-                              ? "opacity-100 translate-x-0 visible"
-                              : "opacity-0 translate-x-2 invisible pointer-events-none"
-                          }
-                        `}
+                      <li
+                        className="relative"
+                        onMouseEnter={openDonateSub}
+                        onMouseLeave={closeDonateSub}
                       >
-                        <ul>
-                          <li>
-                            <Link
-                              href={DONATE_LINKS.magazine}
-                              className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
-                              onClick={() => {
-                                setDonateOpen(false);
-                                setDonateSubOpen(false);
-                              }}
-                            >
-                              Magazine
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href={DONATE_LINKS.books}
-                              className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
-                              onClick={() => {
-                                setDonateOpen(false);
-                                setDonateSubOpen(false);
-                              }}
-                            >
-                              Books
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href={DONATE_LINKS.products}
-                              className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
-                              onClick={() => {
-                                setDonateOpen(false);
-                                setDonateSubOpen(false);
-                              }}
-                            >
-                              Products
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href={DONATE_LINKS.services}
-                              className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
-                              onClick={() => {
-                                setDonateOpen(false);
-                                setDonateSubOpen(false);
-                              }}
-                            >
-                              Services
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                  </ul>
+                        <div className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-[#FFF8E1] cursor-pointer">
+                          <Link
+                            href={DONATE_LINKS.products}
+                            className="flex-1"
+                          >
+                            Donate by Purchase
+                          </Link>
+                          <span className="text-xs text-gray-500">▶</span>
+                        </div>
+
+                        {/* SUBMENU: opens to the LEFT */}
+                        <div
+                          className={`
+                            absolute right-full top-0 mr-2 w-52 bg-white
+                            rounded-2xl shadow-2xl border border-[#F2C411]/40 p-2
+                            ${
+                              donateSubOpen
+                                ? "opacity-100 translate-x-0 visible"
+                                : "opacity-0 translate-x-2 invisible pointer-events-none"
+                            }
+                          `}
+                        >
+                          <ul>
+                            <li>
+                              <Link
+                                href={DONATE_LINKS.magazine}
+                                className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
+                                onClick={() => {
+                                  setDonateOpen(false);
+                                  setDonateSubOpen(false);
+                                }}
+                              >
+                                Magazine
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href={DONATE_LINKS.books}
+                                className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
+                                onClick={() => {
+                                  setDonateOpen(false);
+                                  setDonateSubOpen(false);
+                                }}
+                              >
+                                Books
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href={DONATE_LINKS.products}
+                                className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
+                                onClick={() => {
+                                  setDonateOpen(false);
+                                  setDonateSubOpen(false);
+                                }}
+                              >
+                                Products
+                              </Link>
+                            </li>
+                            <li>
+                              <Link
+                                href={DONATE_LINKS.services}
+                                className="block px-3 py-2 rounded-xl hover:bg-[#FFF8E1]"
+                                onClick={() => {
+                                  setDonateOpen(false);
+                                  setDonateSubOpen(false);
+                                }}
+                              >
+                                Services
+                              </Link>
+                            </li>
+                          </ul>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
+
+                {/* Login button */}
+                <Link
+                  href="/login"
+                  className="
+                    px-4 py-2 rounded-full text-sm font-semibold
+                    border border-[#D62828] text-[#D62828]
+                    bg-white/90
+                    hover:bg-[#D62828] hover:text-white
+                    shadow-sm hover:shadow-md
+                    transition
+                    hover:-translate-y-0.5 active:translate-y-0
+                  "
+                >
+                  Login
+                </Link>
               </div>
             </div>
 
@@ -593,6 +615,16 @@ export default function Header() {
               >
                 Contact
               </Link>
+
+              {/* Login (mobile) */}
+              <Link
+                href="/login"
+                className="block px-4 py-2 rounded-xl text-sm text-[#D62828] border border-[#F2C411]/60 mx-4 mt-1 text-center bg-white"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </Link>
+
               <Link
                 href="/volunteer"
                 className="block mx-4 mt-1 px-4 py-2 rounded-full text-center text-sm font-semibold bg-gradient-to-r from-[#F2C411] to-[#D62828] text-white"
