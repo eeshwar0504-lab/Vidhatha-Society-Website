@@ -320,7 +320,7 @@ export default function CreateProgramPage() {
         finalImageUrl = uploaded;
       }
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+      const payload = { title, category, short:shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {
