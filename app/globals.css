@@ -19,3 +19,16 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ============================= */
+/* Prevent horizontal scrolling  */
+/* ============================= */
+html, body {
+  overflow-x: hidden !important;
+  width: 100%;
+}
+
+/* Universal bounding to avoid oversized container issues */
+* {
+  box-sizing: border-box;
+}

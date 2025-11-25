@@ -18,18 +18,28 @@ let transporter: TransporterType | null = null;
 export async function getTransporter() {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined;
+  // Defaults tuned for Gmail
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
+  const port = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 587;
+
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
+
+  // Decide secure based on env or port
+  const secureEnv = process.env.SMTP_SECURE;
+  const secure =
+    typeof secureEnv === "string"
+      ? secureEnv === "true"
+      : port === 465; // if not specified, 465 => secure, 587 => STARTTLS
 
   if (host && port && user && pass) {
     transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure, // for Gmail: 587+false or 465+true
       auth: { user, pass },
     });
+
     return transporter;
   }
 
@@ -62,12 +72,16 @@ export async function sendMail(opts: MailOptions) {
   const fromName =
     opts.fromName ?? process.env.NOREPLY_FROM_NAME ?? "Vidhatha Society";
 
+  // If you want to force from = SMTP_USER (Gmail), uncomment below:
+  // const fromEmail = process.env.SMTP_USER as string;
+
   const fromEmail =
     process.env.NOREPLY_FROM_EMAIL ??
+    process.env.SMTP_USER ?? // fallback to SMTP_USER if set
     `no-reply@${process.env.NEXT_PUBLIC_SITE_DOMAIN ?? "localhost"}`;
 
   const mail = {
-    from: `"${fromName}" <${fromEmail}>`,
+    from: `"${fromName.replace(/"/g, "'")}" <${fromEmail}>`,
     to: opts.to,
     subject: opts.subject,
     text: opts.text,
@@ -77,7 +91,6 @@ export async function sendMail(opts: MailOptions) {
 
   const info = await t.sendMail(mail);
 
-  // ✔ NO require() ✔ NO any
   const previewUrl =
     process.env.NODE_ENV !== "production"
       ? getTestMessageUrl(info) || undefined

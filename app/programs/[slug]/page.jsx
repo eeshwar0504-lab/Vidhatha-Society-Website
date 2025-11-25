@@ -1,102 +1,284 @@
-import programsData from "../../../data/programs.json";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Head from "next/head";
+import api from "@/lib/api";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import DOMPurify from "dompurify";
+import PageShell from "../../../components/PageShell";
+import SectionHeader from "../../../components/SectionHeader";
 
-/* helper slug function (matches the slug in JSON if needed) */
-function slugify(text) {
-  return String(text || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[’'"]/g, "")
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-export function generateStaticParams() {
-  const params = [];
-  const cats = programsData?.categories || [];
-  for (const cat of cats) {
-    for (const p of cat.programs || []) {
-      const slug = typeof p === "string" ? slugify(p) : (p.slug || slugify(p.title));
-      params.push({ slug });
-    }
-  }
-  return params;
-}
-
-export default function ProgramDetail({ params }) {
-  const { slug } = params;
-  let program = null;
-
-  // find the program across categories
-  for (const cat of programsData?.categories || []) {
-    for (const p of cat.programs || []) {
-      const candidateSlug = typeof p === "string" ? slugify(p) : (p.slug || slugify(p.title));
-      if (candidateSlug === slug) {
-        program = typeof p === "string"
-          ? { title: p, slug: candidateSlug, description: "", short: "", images: [], donation_target: undefined }
-          : { ...p };
-        program.category = cat.title;
-        break;
-      }
-    }
-    if (program) break;
-  }
-
-  if (!program) return notFound();
-
+/* Skeleton with new UI shell */
+function Skeleton() {
   return (
-    <main className="container mx-auto px-4 py-12">
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-sm">
-        <div className="mb-3 text-sm text-gray-500">Category: {program.category || "General"}</div>
-        <h1 className="text-2xl font-bold mb-3">{program.title}</h1>
-        {program.short && <p className="text-gray-600 mb-3">{program.short}</p>}
-
-        {/* Markdown-rendered description */}
-       <div className="prose prose-lg max-w-none text-gray-700 mb-6">
-  <ReactMarkdown
-    remarkPlugins={[remarkGfm]}
-    components={{
-      h2: ({node, ...props}) => (
-        <h2 className="mt-8 mb-3 font-bold text-xl text-gray-900" {...props} />
-      ),
-      h3: ({node, ...props}) => (
-        <h3 className="mt-6 mb-2 font-semibold text-lg text-gray-800" {...props} />
-      ),
-      p: ({node, ...props}) => (
-        <p className="mb-4 leading-relaxed" {...props} />
-      ),
-      hr: () => <hr className="my-8 border-gray-300" />,
-    }}
-  >
-    {program.description}
-  </ReactMarkdown>
-</div>
-
-
-        {/* images (if any) */}
-        {program.images && program.images.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {program.images.map((src, i) => (
-              <img key={i} src={src} alt={`${program.title} ${i + 1}`} className="w-full h-40 object-cover rounded" />
-            ))}
-          </div>
-        )}
-
-        {program.donation_target ? (
-          <div className="mb-6">
-            <strong>Donation target:</strong> ₹{Number(program.donation_target).toLocaleString()}
-          </div>
-        ) : null}
-
-        <div className="flex gap-3">
-          <Link href="/donate" className="px-4 py-2 rounded-md bg-purple-600 text-white">Donate</Link>
-          <Link href="/volunteer" className="px-4 py-2 rounded-md border">Volunteer</Link>
+    <PageShell>
+      <div className="max-w-4xl mx-auto space-y-4 animate-pulse">
+        <div className="h-56 bg-gray-200 rounded-2xl" />
+        <div className="h-8 w-3/4 bg-gray-200 rounded" />
+        <div className="h-4 w-full bg-gray-200 rounded" />
+        <div className="h-4 w-5/6 bg-gray-200 rounded" />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="h-32 bg-gray-200 rounded-2xl" />
+          <div className="h-32 bg-gray-200 rounded-2xl" />
         </div>
       </div>
-    </main>
+    </PageShell>
+  );
+}
+
+/* Helper: build absolute URL for images returned by backend. */
+function toAbsoluteUrl(val) {
+  if (!val) return null;
+  if (/^https?:\/\//i.test(val)) return val;
+
+  const base = api.defaults?.baseURL || "";
+  if (!base) return val;
+
+  if (val.startsWith("/")) {
+    return `${base}${val.startsWith("/") ? "" : "/"}${val}`;
+  }
+  return `${base}/${val}`;
+}
+
+export default function ProgramPublicPage() {
+  const params = useParams();
+  const slug = params?.slug;
+
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
+  const [program, setProgram] = useState(null);
+  const [bannerUrl, setBannerUrl] = useState(null);
+  const [galleryUrls, setGalleryUrls] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!slug) {
+      setErr("Missing program slug");
+      setLoading(false);
+      return;
+    }
+
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await api.get(`/api/programs/${encodeURIComponent(slug)}`);
+        const p = res?.data?.program || res?.data?.doc || res?.data || null;
+        if (!p) throw new Error("Program not found");
+        if (!mounted) return;
+
+        setProgram(p);
+
+        const bannerRaw =
+          p.bannerUrl ||
+          p.imageUrl ||
+          (Array.isArray(p.images) && p.images.length > 0 && p.images[0]) ||
+          null;
+        setBannerUrl(toAbsoluteUrl(bannerRaw));
+
+        const rawGallery =
+          p.gallery ||
+          p.images ||
+          (p.imageUrl ? [p.imageUrl] : []) ||
+          [];
+        const absGallery = Array.isArray(rawGallery)
+          ? rawGallery.map((v) => toAbsoluteUrl(v)).filter(Boolean)
+          : [];
+        setGalleryUrls(absGallery);
+      } catch (e) {
+        console.error("Failed to load program:", e);
+        if (mounted)
+          setErr(
+            e?.response?.data?.message || e?.message || "Failed to load program"
+          );
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  const sanitize = (dirtyHtml) => {
+    if (!dirtyHtml) return "";
+    try {
+      return DOMPurify.sanitize(dirtyHtml, {
+        USE_PROFILES: { html: true },
+        ADD_ATTR: ["target"],
+      });
+    } catch (e) {
+      console.error("DOMPurify error:", e);
+      return dirtyHtml;
+    }
+  };
+
+  if (loading) return <Skeleton />;
+
+  if (err) {
+    return (
+      <PageShell>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-xl font-semibold mb-3">Program not found</h2>
+          <p className="mb-4 text-red-600">{err}</p>
+          <Link
+            href="/programs"
+            className="inline-flex px-4 py-2 rounded-2xl bg-[#1D3A8A] text-white text-sm font-semibold"
+          >
+            Back to Programs
+          </Link>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (!program) {
+    return (
+      <PageShell>
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-xl font-semibold mb-3">No program data</h2>
+          <Link
+            href="/programs"
+            className="inline-flex px-4 py-2 rounded-2xl bg-[#1D3A8A] text-white text-sm font-semibold"
+          >
+            Back to Programs
+          </Link>
+        </div>
+      </PageShell>
+    );
+  }
+
+  const title = program.title || "Program";
+  const description = program.shortDescription || program.excerpt || "";
+  const safeHtml = sanitize(program.description || program.content || "");
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard");
+    } catch {
+      alert("Failed to copy link");
+    }
+  };
+
+  return (
+    <>
+      <Head>
+        <title>{title} — Vidhatha Society</title>
+        <meta
+          name="description"
+          content={
+            description ||
+            (program.description ? program.description.slice(0, 150) : "")
+          }
+        />
+        <meta property="og:title" content={title} />
+        {bannerUrl && <meta property="og:image" content={bannerUrl} />}
+        <meta property="og:description" content={description} />
+      </Head>
+
+      <PageShell>
+        <div className="max-w-4xl mx-auto">
+          <SectionHeader
+            eyebrow="Program"
+            title={title}
+            highlight=""
+            description={description}
+          />
+
+          {/* Banner */}
+          {bannerUrl && (
+            <div className="w-full h-64 rounded-2xl overflow-hidden mb-6 bg-gray-100 shadow-sm">
+              <img
+                src={bannerUrl}
+                alt={title}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <a
+              href={program.joinUrl || "/contact"}
+              className="
+                inline-flex px-5 py-2.5 rounded-2xl bg-[#1D3A8A] text-white text-sm font-semibold
+                shadow-md shadow-[#1D3A8A]/30 hover:-translate-y-0.5 transition
+              "
+            >
+              Join this program
+            </a>
+            <a
+              href={program.donateUrl || "/donate"}
+              className="
+                inline-flex px-5 py-2.5 rounded-2xl bg-[#D62828] text-white text-sm font-semibold
+                shadow-md shadow-[#D62828]/30 hover:-translate-y-0.5 transition
+              "
+            >
+              Donate to support
+            </a>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="
+                inline-flex px-4 py-2 rounded-2xl border border-gray-300 text-sm
+                hover:bg-gray-50 transition ml-auto
+              "
+            >
+              Copy link
+            </button>
+          </div>
+
+          {/* Main content */}
+          <article className="rounded-2xl bg-white border border-[#F2C41133] shadow-sm p-5 md:p-6">
+            <div
+              className="prose max-w-none prose-p:text-gray-700 prose-li:text-gray-700"
+              dangerouslySetInnerHTML={{
+                __html: safeHtml || "<p>No details available.</p>",
+              }}
+            />
+          </article>
+
+          {/* Gallery */}
+          {galleryUrls && galleryUrls.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900">
+                Gallery
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {galleryUrls.map((imgUrl, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-2xl overflow-hidden bg-gray-100 h-40 shadow-sm"
+                  >
+                    <img
+                      src={imgUrl}
+                      alt={`${title} image ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="mt-10">
+            <Link
+              href="/programs"
+              className="inline-flex px-5 py-2.5 rounded-2xl border text-sm hover:bg-gray-50"
+            >
+              ← Back to all programs
+            </Link>
+          </div>
+        </div>
+      </PageShell>
+    </>
   );
 }
