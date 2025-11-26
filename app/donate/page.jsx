@@ -256,7 +256,7 @@ export default function DonationPage() {
     // Optionally create an order on your backend
     let orderId;
     try {
-      const res = await fetch("/api/create-razorpay-order", {
+      const res = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
