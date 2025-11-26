@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { AuthProvider, useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 function LoginForm() {
   const { login } = useAuth();
@@ -36,7 +36,6 @@ function LoginForm() {
   return (
     <div className="min-h-[calc(100vh-4px)] flex items-center justify-center px-4 py-10 bg-gradient-to-b from-[#F9FAFB] via-[#FFFDF7] to-[#FFF7D6]">
       <div className="w-full max-w-md">
-        {/* Small breadcrumb / back link */}
         <div className="mb-4 flex items-center justify-between text-xs text-gray-500">
           <Link
             href="/"
@@ -50,14 +49,13 @@ function LoginForm() {
           </span>
         </div>
 
-        {/* Card */}
         <div className="bg-white/95 border border-yellow-100 rounded-3xl shadow-xl shadow-yellow-100/70 px-6 py-7 md:px-7 md:py-8">
           <div className="mb-6 text-center">
             <p className="text-[11px] font-semibold tracking-[0.28em] uppercase text-[#D62828] mb-2">
               Admin Login
             </p>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-              Welcome back, Team Vidhatha 
+              Welcome back, Team Vidhatha
             </h1>
             <p className="mt-1 text-xs md:text-sm text-gray-600">
               Sign in to manage programs, events, and website content.
@@ -121,7 +119,6 @@ function LoginForm() {
             </button>
           </form>
 
-          {/* Tiny footer note */}
           <p className="mt-5 text-[11px] text-center text-gray-400">
             If you’re not part of the admin team, please return to the{" "}
             <Link href="/" className="underline hover:text-[#1D3A8A]">
@@ -138,11 +135,8 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <>
-      {/* top letterhead stripe */}
       <div className="h-1 w-full bg-gradient-to-r from-[#F2C411] via-[#D62828] to-[#1D3A8A]" />
-      <AuthProvider>
-        <LoginForm />
-      </AuthProvider>
+      <LoginForm />
     </>
   );
 }
