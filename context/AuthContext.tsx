@@ -27,36 +27,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
 
   useEffect(() => {
-    // try to load user on mount if token present OR try /me in cookie-based flow
-    (async () => {
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        if (token) {
-          // set header for subsequent requests
-          setAuthToken(token);
-        }
+  (async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      console.log("Auth init - token:", token);
 
-        // Always attempt /api/auth/me on init:
-        // - If JWT: /me will return user (token added above)
-        // - If cookie auth: cookie will be sent (see note below about withCredentials)
-        try {
-          const resp = await api.get("/api/auth/me");
-          setUser(resp?.data?.user || null);
-        } catch (err) {
-          // if /me fails, clear token to avoid stuck state
-          console.warn("Auth: /me failed on init", err);
-          localStorage.removeItem("token");
-          setAuthToken(null);
-          setUser(null);
-        }
-      } catch (e) {
-        console.error("Auth init error:", e);
-        setUser(null);
-      } finally {
-        setLoading(false);
+      if (token) {
+        setAuthToken(token);
       }
-    })();
-  }, []);
+
+      try {
+        const resp = await api.get("/api/auth/me");
+        console.log("Auth /me response:", resp?.data);
+        setUser(resp?.data?.user || null);
+      } catch (err) {
+        console.warn("Auth: /me failed on init", err);
+        localStorage.removeItem("token");
+        setAuthToken(null);
+        setUser(null);
+      }
+    } catch (e) {
+      console.error("Auth init error:", e);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, []);
+
 
   const login = async (email: string, password: string) => {
     try {
