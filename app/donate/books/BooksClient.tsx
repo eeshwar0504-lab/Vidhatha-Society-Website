@@ -7,19 +7,16 @@ import { useRouter } from "next/navigation";
 
 /**
  * Client component: put all event handlers, useState, window usage here.
- * Replace the download URLs with real links when available.
+ * Replace the download URL with real link when available.
  */
 
 const ANDROID_DOWNLOAD_URL = "/downloads/VidhathaApp.apk"; // replace if you host APK
-const IOS_DOWNLOAD_URL = "https://apps.apple.com/app/your-app-id"; // replace with real AppStore link
-const PLAYSTORE_URL = "https://play.google.com/store/apps/details?id=your.package.name"; // replace with real PlayStore link
 
 export default function BooksClient() {
   const router = useRouter();
 
   const handleBuy = (path: string) => {
     // Navigate to a product/donation detail or trigger checkout flow
-    // If you prefer client-side nav: router.push(path)
     router.push(path);
   };
 
@@ -79,36 +76,20 @@ export default function BooksClient() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <a
-              href={PLAYSTORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded hover:opacity-90"
-            >
-              📱 <span className="text-sm">Play Store</span>
-            </a>
-
+          <div className="flex items-center gap-3">
+            {/* ✅ Only one button: Download APK */}
             <button
               onClick={handleDownloadApk}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded hover:opacity-90"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white rounded-full text-sm font-semibold hover:opacity-90 transition"
             >
-              ⬇️ <span className="text-sm">Download APK</span>
+              ⬇️ <span>Download APK</span>
             </button>
-
-            <a
-              href={IOS_DOWNLOAD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded hover:opacity-90"
-            >
-               <span className="text-sm">App Store</span>
-            </a>
           </div>
         </div>
 
         <p className="mt-4 text-xs text-gray-500 max-w-2xl">
-          Note: APK install may require enabling “Unknown Sources.” Use Play Store for best experience.
+          Note: APK install may require enabling “Install from unknown sources” in your Android
+          settings.
         </p>
       </section>
     </>

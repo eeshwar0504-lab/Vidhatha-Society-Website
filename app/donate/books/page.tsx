@@ -25,8 +25,8 @@ export default function DonateBooksPage() {
       <footer className="mt-6 text-sm text-gray-600">
         <p>
           For download issues, contact{" "}
-          <a href="mailto:hello@vidhatha.org" className="underline text-blue-600">
-            hello@vidhatha.org
+          <a href="mailto:vidhathasociety@gmail.com" className="underline text-blue-600">
+            vidhathasociety@gmail.com
           </a>
           .
         </p>

@@ -37,7 +37,14 @@ export default function VolunteerForm() {
           type: 'success',
           message: 'Thank you for your interest! We will contact you soon.',
         });
-        setFormData({ name: '', email: '', phone: '', skills: '', availability: '', message: '' });
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          skills: '',
+          availability: '',
+          message: '',
+        });
       } else {
         setStatus({
           type: 'error',
@@ -55,7 +62,7 @@ export default function VolunteerForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="space-y-6 bg-white">
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
           Full Name *
@@ -67,7 +74,7 @@ export default function VolunteerForm() {
           required
           value={formData.name}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
         />
       </div>
 
@@ -82,7 +89,7 @@ export default function VolunteerForm() {
           required
           value={formData.email}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
         />
       </div>
 
@@ -96,7 +103,7 @@ export default function VolunteerForm() {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
         />
       </div>
 
@@ -111,7 +118,7 @@ export default function VolunteerForm() {
           rows={3}
           value={formData.skills}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
           placeholder="Tell us about your relevant skills..."
         />
       </div>
@@ -125,7 +132,7 @@ export default function VolunteerForm() {
           name="availability"
           value={formData.availability}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
         >
           <option value="">Select your availability</option>
           <option value="weekdays">Weekdays</option>
@@ -144,14 +151,14 @@ export default function VolunteerForm() {
           rows={4}
           value={formData.message}
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F2C411] focus:border-[#F2C411]"
         />
       </div>
 
       {status.message && (
         <div
           className={`p-4 rounded-lg ${
-            status.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+            status.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
           }`}
         >
           {status.message}
@@ -161,7 +168,15 @@ export default function VolunteerForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full px-6 py-4 bg-primary-600 text-white rounded-lg font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="
+          w-full px-6 py-4
+          bg-[#F2C411] text-gray-900
+          rounded-lg font-bold text-lg
+          shadow-sm hover:shadow-md
+          hover:bg-[#e1b60f]
+          transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+        "
       >
         {isSubmitting ? 'Submitting...' : 'Submit Application'}
       </button>

@@ -15,7 +15,8 @@ export default function ContactPage() {
   const CONTACT_EMAIL = "vidhathasociety@gmail.com";
   const CONTACT_PHONE = "+919542366556";
   const DISPLAY_PHONE = "+91 9542366556";
-  const ADDRESS = "C-841, NGO Colony, Vanasthalipuram, Hyderabad, Telangana 500070";
+  const ADDRESS =
+    "C-841, NGO Colony, Vanasthalipuram, Hyderabad, Telangana 500070";
   const mapsUrl =
     "https://www.google.com/maps/place/Vidhatha+Society/data=!4m2!3m1!1s0x0:0xb614d1ae5750a117?sa=X&ved=1t:2428&ictx=111";
 
@@ -102,7 +103,6 @@ export default function ContactPage() {
       </svg>
     ),
 
-    // cleaner Instagram glyph
     Instagram: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -143,6 +143,31 @@ export default function ContactPage() {
         <path d="M12 0C5.4 0 .2 5.4.2 12S5.4 24 12 24s11.8-5.4 11.8-12S18.6 0 12 0zm5.4 7.2l-1.1 5-1.7 4.9c-.2.6-.5.8-1 .8-.3 0-.5-.1-.7-.3l-1.8-1.6-1.3 1.2c-.2.2-.4.4-.7.4-.1 0-.3 0-.4-.1l.2-2.7 4.9-4.5c.2-.1.1-.4-.1-.3l-6.6 4.1-2.8-.9c-.6-.2-.6-.6.1-.9L17 6.2c.5-.2.9 0 .4 1z" />
       </svg>
     ),
+
+    X: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+        <path d="M3 3h4.4L13 10.2 18.2 3H21l-7 9.3L21.5 21H17L12 14.9 6.9 21H3.2l7.3-9.7L3 3z" />
+      </svg>
+    ),
+
+    Pinterest: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
+        <path d="M12 0C5.4 0 .7 4.9.7 10.8c0 4.5 2.8 7 4.6 7 .7 0 1.1-1.9 1.1-2.4 0-.6-1.4-1.7-1.4-4.1 0-3.9 3-6.7 7-6.7 3.4 0 5.9 2.1 5.9 5.8 0 3.5-1.8 6-4.1 6-1.3 0-2.3-1.1-2-2.4.4-1.6 1.1-3.3 1.1-4.4 0-1-0.6-1.9-1.9-1.9-1.5 0-2.7 1.6-2.7 3.8 0 1.4.5 2.3.5 2.3l-1.9 7.9c-.6 2.5-.1 5.6-.1 5.9l.1.1h.1c.2-.3 2.4-3 3.1-5.4l1.2-4.5c.6 1.1 2.1 1.9 3.7 1.9 4 0 6.9-3.4 6.9-8.1C23.3 4.3 18.7 0 12 0z" />
+      </svg>
+    ),
+
+    // Blog / Blogger-style icon (white "b" inside orange square)
+    Blog: (props) => (
+      <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
+        {/* outer orange rounded square (color from parent) */}
+        <rect x="3" y="3" width="18" height="18" rx="5" fill="currentColor" />
+        {/* inner white "b"-like shape */}
+        <path
+          fill="white"
+          d="M10 7.5c0-1 .8-1.8 1.8-1.8h1.4c1.7 0 3 1.3 3 3v1h.3c.8 0 1.5.7 1.5 1.5v2.2A3.6 3.6 0 0114.8 18h-4a3.8 3.8 0 01-3.8-3.8v-4c0-1.5 1.2-2.7 2.7-2.7H10zm-.8 3.3a.9.9 0 000 1.8h3.4a.9.9 0 100-1.8H9.2zm.9 3.6a.9.9 0 000 1.8h2.5a.9.9 0 100-1.8H10.1z"
+        />
+      </svg>
+    ),
   };
 
   const socials = [
@@ -181,6 +206,24 @@ export default function ContactPage() {
       href: "https://t.me/vidhathasocietytelegram",
       bg: "bg-blue-50",
       fg: "text-sky-600",
+    },
+    {
+      name: "X",
+      href: "https://x.com/VidhathaSociety",
+      bg: "bg-neutral-100",
+      fg: "text-neutral-900",
+    },
+    {
+      name: "Pinterest",
+      href: "https://in.pinterest.com/vidhathasociety/",
+      bg: "bg-red-50",
+      fg: "text-red-700",
+    },
+    {
+      name: "Blog",
+      href: "https://vidhathasociety.blogspot.com/",
+      bg: "bg-orange-50",
+      fg: "text-orange-600",
     },
   ];
 
