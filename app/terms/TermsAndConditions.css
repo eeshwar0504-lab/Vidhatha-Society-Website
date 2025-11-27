@@ -1,0 +1,175 @@
+:root {
+  --color-primary: #3030f1;
+  --color-text: #595959;
+  --color-text-dark: #000000;
+  --color-bg: #f5f5f5;
+  --color-white: #ffffff;
+  --font-family: Arial, Calibri, sans-serif;
+  --font-size-body: 14px;
+  --font-size-heading: 19px;
+  --font-size-title: 26px;
+}
+
+/* Page background & centering */
+.terms-page {
+  min-height: 100vh;
+  padding: 3rem 1.25rem;
+  background: linear-gradient(135deg, #eef2ff, #f9fafb);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  font-family: var(--font-family);
+}
+
+/* Card container */
+.terms-container {
+  max-width: 900px;
+  width: 100%;
+  background-color: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.15);
+  padding: 28px 26px 32px;
+  box-sizing: border-box;
+}
+
+/* Header */
+.terms-header {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+}
+
+.terms-logo-text {
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: #f0f0ff;
+  color: #4b5563;
+}
+
+/* Main Content wrapper */
+.terms-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* Intro and each section */
+.terms-intro,
+.terms-section {
+  padding-top: 0.5rem;
+  border-top: 1px solid #edf0f3;
+}
+
+/* Remove top border for the first block */
+.terms-intro:first-of-type {
+  border-top: none;
+}
+
+/* Headings */
+.terms-intro h1 {
+  font-size: var(--font-size-title);
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text-dark);
+}
+
+.terms-intro h2,
+.terms-section h2 {
+  font-size: var(--font-size-heading);
+  margin: 1.2rem 0 0.6rem;
+  color: var(--color-text-dark);
+}
+
+.terms-intro h3,
+.terms-section h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.4rem;
+  color: var(--color-text-dark);
+}
+
+/* Text */
+.terms-intro p,
+.terms-section p,
+.terms-section li {
+  font-size: var(--font-size-body);
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+/* Lists */
+.terms-section ul,
+.terms-intro ul {
+  padding-left: 1.2rem;
+  margin: 0.4rem 0 0.9rem;
+}
+
+.terms-section li,
+.terms-intro li {
+  margin-bottom: 0.35rem;
+}
+
+/* Ordered lists */
+.terms-section ol {
+  padding-left: 1.3rem;
+  margin: 0.4rem 0 0.9rem;
+}
+
+/* Links */
+.terms-intro a,
+.terms-section a {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(48, 48, 241, 0.25);
+}
+
+.terms-intro a:hover,
+.terms-section a:hover {
+  border-bottom-color: rgba(48, 48, 241, 0.7);
+}
+
+/* Spacing tweaks */
+.terms-intro > p:first-of-type {
+  margin-top: 0.25rem;
+}
+
+.terms-section {
+  margin-top: 0.75rem;
+}
+
+/* Contact block at bottom */
+#contact div {
+  background-color: #f5f5f5;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-top: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .terms-page {
+    padding: 2rem 1rem;
+  }
+
+  .terms-container {
+    padding: 22px 18px 26px;
+    border-radius: 12px;
+  }
+
+  .terms-intro h1 {
+    font-size: 22px;
+  }
+
+  .terms-intro h2,
+  .terms-section h2 {
+    font-size: 17px;
+  }
+
+  .terms-intro p,
+  .terms-section p,
+  .terms-section li {
+    font-size: 13px;
+  }
+}
