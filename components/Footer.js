@@ -75,9 +75,7 @@ export default function Footer() {
                  rel="noopener noreferrer"
                  className={`${iconBase} hover:bg-pink-500`}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M7.5 2A5.5 5.5 0 0 0 2 7.5v9A5.5 5.5 0 
-                   0 0 7.5 22h9a5.5 5.5 0 0 0 5.5-5.5v-9A5.5 
-                   5.5 0 0 0 16.5 2h-9zm0 2h9A3.5 3.5 0 0 
+                  <path d="M7.5 2A5.5 5.5 0 0 0 2 7.5v9A5.5 5.5 0 0 0 7.5 22h9a5.5 5.5 0 0 0 5.5-5.5v-9A5.5 5.5 0 0 0 16.5 2h-9zm0 2h9A3.5 3.5 0 0 
                    1 20 7.5v9a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 
                    0 0 1 4 16.5v-9A3.5 3.5 0 0 1 7.5 4zm9.25 
                    1a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zM12 
@@ -130,6 +128,9 @@ export default function Footer() {
               {/* <li><Link href="/events" className="hover:text-white">Events</Link></li> */}
               <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
               {/* <li><Link href="/news" className="hover:text-white">News</Link></li> */}
+
+              <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+
             </ul>
           </div>
 
