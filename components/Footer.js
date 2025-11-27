@@ -130,7 +130,7 @@ export default function Footer() {
               {/* <li><Link href="/news" className="hover:text-white">News</Link></li> */}
 
               <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
-
+              <li><Link href="/terms" className="hover:text-white">Terms & Conditions</Link></li>
             </ul>
           </div>
 
