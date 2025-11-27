@@ -1,8 +1,7 @@
-// app/admin/programs/create/page.jsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import api from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { toast } from "@/components/ToastProvider";
@@ -16,7 +15,7 @@ import * as ImageExtensionPkg from "@tiptap/extension-image";
 
 /* ---------- Constants ---------- */
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-export const TEST_FILE_PATH = "/mnt/data/87fda3cf-c54a-4bf6-852d-8b2e27b20f76.png";
+export const EDIT_TEST_FILE = "/mnt/data/87fda3cf-c54a-4bf6-852d-8b2e27b20f76.png";
 
 /* ---------- Helper to safely create extensions ---------- */
 function makeExt(mod) {
@@ -142,10 +141,13 @@ function Toolbar({ editor, onImageUpload }) {
   );
 }
 
-/* ---------- Create Program Page (enhanced UI) ---------- */
-export default function CreateProgramPage() {
+/* ---------- Edit Program Page (prefills data + update) ---------- */
+export default function EditProgramPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id || params?.programId || null;
 
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -153,6 +155,7 @@ export default function CreateProgramPage() {
   const [category, setCategory] = useState("social-welfare");
   const [shortDescription, setShortDescription] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
+  const [publicId, setPublicId] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -180,17 +183,47 @@ export default function CreateProgramPage() {
 
   const fileInputRef = useRef(null);
 
+  // load program
   useEffect(() => {
-    if (editor) {
-      setLocalContent(editor.getHTML());
+    if (!id) return;
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/programs/${encodeURIComponent(id)}`);
+        const doc = res?.data?.program || res?.data?.doc || res?.data || null;
+        if (!doc) {
+          throw new Error("Program not found");
+        }
+        if (cancelled) return;
+        setTitle(doc.title || "");
+        setCategory(doc.category || "social-welfare");
+        setShortDescription(doc.short || "");
+        setImageUrl(doc.imageUrl || (doc.images && doc.images[0]) || null);
+        setPublicId(doc.publicId || doc.public_id || null);
+        if (doc.description) {
+          try {
+            editor && editor.commands && editor.commands.setContent && editor.commands.setContent(doc.description);
+            setLocalContent(doc.description);
+          } catch {}
+        }
+      } catch (e) {
+        console.error("Failed to load program", e);
+        toast.error("Failed to load program. It may not exist or there was a network error.");
+        setErr(e?.message || "Failed to load program");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  }, [editor]);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, editor]);
 
   useEffect(() => {
     if (!editor) return;
-    const handler = () => {
-      setLocalContent(editor.getHTML());
-    };
+    const handler = () => setLocalContent(editor.getHTML());
     editor.on("update", handler);
     return () => editor.off("update", handler);
   }, [editor]);
@@ -203,27 +236,33 @@ export default function CreateProgramPage() {
     };
   }, [previewUrl]);
 
-  /* ---------- Upload helper (matches backend: POST /api/uploads, field "file" or "image") ---------- */
-  const uploadImageToServer = async (file) => {
-    if (!file) return null;
-    if (!file.type || !file.type.startsWith("image/")) {
-      toast.error("Only image files are allowed.");
-      return null;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error("Image too large. Max size is 5 MB.");
-      return null;
-    }
+  /* ---------- Upload helper (same approach as Create) ---------- */
+  // Replace your uploadImageToServer with this version
+// Works in Next.js client components (JS). If you use TS, add types accordingly.
 
-    setImageUploading(true);
-    setImageUploadProgress(0);
+const uploadImageToServer = async (file) => {
+  if (!file) return null;
+  if (!file.type || !file.type.startsWith("image/")) {
+    toast.error("Only image files are allowed.");
+    return null;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    toast.error("Image too large. Max size is 5 MB.");
+    return null;
+  }
 
+  setImageUploading(true);
+  setImageUploadProgress(0);
+
+  // helper: do a single POST to given endpoint and field name
+  const tryServerUpload = async (endpoint, fieldName = "file") => {
     try {
       const fd = new FormData();
-      // try "image" field which common backends use
-      fd.append("image", file);
+      fd.append(fieldName, file, file.name);
 
-      const res = await api.post("/api/uploads/single", fd, {
+      // Important: don't set Content-Type header for FormData; axios will set boundary
+      // If you use fetch remove Content-Type too.
+      const res = await api.post(endpoint, fd, {
         timeout: 30000,
         onUploadProgress: (progressEvent) => {
           try {
@@ -233,44 +272,81 @@ export default function CreateProgramPage() {
             setImageUploadProgress(pct);
           } catch {}
         },
+        // withCredentials: false, // only if needed for cookies
       });
 
       const data = res?.data ?? {};
-      const url = data.url || data.fileUrl || data.path || data.location || null;
-
-      if (!url) {
-        // fallback to other endpoints/fields
-        if (res?.data?.result?.secure_url) return res.data.result.secure_url;
-        console.error("Upload succeeded but server returned no URL:", data);
-        toast.error("Upload succeeded but server returned no URL. Check server response.");
-        return null;
+      // server might return url under different keys
+      const url = data.url || data.fileUrl || data.path || data.location || (data.result && data.result.secure_url) || null;
+      if (url) {
+        console.info(`[upload] server upload succeeded: ${endpoint}`, url);
+        return url;
       }
 
-      setImageUploadProgress(0);
-      return url;
-    } catch (err) {
-      console.error("Upload error details:", {
-        message: err?.message,
-        response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
-        request: err?.request,
-      });
-
-      if (err?.response?.data) {
-        const body = err.response.data;
-        const serverMsg = body.message || body.error || JSON.stringify(body);
-        toast.error(serverMsg || "Upload failed (server error)");
-      } else if (err?.request) {
-        toast.error("Network/CORS error: failed to contact upload server. Check backend is running and CORS allows this origin.");
-      } else {
-        toast.error(err?.message || "Image upload failed");
-      }
-
-      setImageUploadProgress(0);
+      // not error but no url -> treat as failure
+      console.warn(`[upload] server returned no url for ${endpoint}`, data);
       return null;
-    } finally {
-      setImageUploading(false);
+    } catch (err) {
+      console.warn(`[upload] server upload to ${endpoint} failed:`, err?.response?.data ?? err?.message ?? err);
+      return null;
     }
   };
+
+  try {
+    // 1) try main endpoint (/api/uploads) with "file"
+    let url = await tryServerUpload("/api/uploads", "file");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 2) fallback: /api/uploads/single with "image"
+    url = await tryServerUpload("/api/uploads/single", "image");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 3) fallback: try direct unsigned Cloudinary (if env present)
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const unsignedPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET;
+    if (cloudName && unsignedPreset) {
+      try {
+        const unsignedUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+        const fd2 = new FormData();
+        fd2.append("file", file);
+        fd2.append("upload_preset", unsignedPreset);
+        // If you want to place into folder, you must include it in unsigned preset or supply 'folder' if preset allows.
+        const resp = await fetch(unsignedUrl, { method: "POST", body: fd2 });
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.warn("[upload] unsigned cloudinary failed:", resp.status, text);
+          throw new Error("Unsigned Cloudinary upload failed");
+        }
+        const json = await resp.json();
+        const secure = json.secure_url || json.url || null;
+        if (secure) {
+          console.info("[upload] unsigned cloudinary succeeded", secure);
+          setImageUploadProgress(0);
+          return secure;
+        }
+        console.warn("[upload] unsigned cloudinary returned no secure_url", json);
+      } catch (e) {
+        console.warn("[upload] unsigned cloudinary error:", e);
+      }
+    } else {
+      console.info("[upload] no unsigned cloudinary config (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET)");
+    }
+
+    // nothing worked
+    toast.error("Image upload failed. Check server logs and Cloudinary config.");
+    return null;
+  } finally {
+    setImageUploadProgress(0);
+    setImageUploading(false);
+  }
+};
+
 
   const handleMainImageChange = (e) => {
     const f = e.target.files?.[0] ?? null;
@@ -290,8 +366,8 @@ export default function CreateProgramPage() {
     setPreviewUrl(URL.createObjectURL(f));
   };
 
-  /* ---------- Create handler ---------- */
-  const onCreate = async (e) => {
+  /* ---------- Save (update) handler ---------- */
+  const onSave = async (e) => {
     e?.preventDefault();
     setErr(null);
     if (!title || title.trim().length < 3) {
@@ -302,14 +378,19 @@ export default function CreateProgramPage() {
       toast.error("Short description must be at least 10 characters.");
       return;
     }
+    if (!id) {
+      toast.error("Missing program id");
+      return;
+    }
 
     setSaving(true);
     try {
       let finalImageUrl = imageUrl;
+      let finalPublicId = publicId;
       if (imageFile) {
         const uploaded = await uploadImageToServer(imageFile);
         if (!uploaded) {
-          const msg = "Image upload failed — program not created.";
+          const msg = "Image upload failed — program not updated.";
           setErr(msg);
           toast.error(msg);
           setSaving(false);
@@ -317,20 +398,22 @@ export default function CreateProgramPage() {
         }
         finalImageUrl = uploaded;
       }
-      const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
-      const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
 
-      const created = res?.data?.program || res?.data?.doc || res?.data || null;
-      if (!created) {
-        console.warn("Unexpected create response:", res?.data);
+      const descriptionHtml = editor ? editor.getHTML() : localContent || "";
+
+      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl, publicId: finalPublicId };
+
+      const res = await api.put(`/api/programs/${encodeURIComponent(id)}`, payload, { headers: { "Content-Type": "application/json" } });
+      const updated = res?.data?.program || res?.data?.doc || res?.data || null;
+      if (!updated) {
+        console.warn("Unexpected update response:", res?.data);
         throw new Error("Unexpected server response");
       }
-      toast.success("Program created");
+      toast.success("Program updated");
       router.push("/admin/programs");
     } catch (error) {
-      console.error("Create failed", error);
-      const msg = error?.response?.data?.message || error?.message || "Failed to create program";
+      console.error("Update failed", error);
+      const msg = error?.response?.data?.message || error?.message || "Failed to update program";
       setErr(msg);
       toast.error(msg);
     } finally {
@@ -338,17 +421,47 @@ export default function CreateProgramPage() {
     }
   };
 
+  /* ---------- Optional: remove current image (ask backend to delete if publicId present) ---------- */
+  const handleRemoveImage = async () => {
+    if (!imageUrl && !publicId) {
+      setImageUrl(null);
+      setPublicId(null);
+      setPreviewUrl(null);
+      setImageFile(null);
+      return;
+    }
+    if (!id) return;
+    try {
+      // Call your backend endpoint to remove image by publicId or by saving null imageUrl.
+      // This endpoint is optional; if not present, we simply clear the UI and let admin save.
+      if (publicId) {
+        await api.post(`/api/uploads/delete`, { publicId }); // implement server-side if desired
+      }
+    } catch (e) {
+      // ignore deletion error but inform user
+      console.warn("Image deletion request failed", e);
+      toast.info("Could not delete remote image; it will be removed from program record.");
+    } finally {
+      setImageUrl(null);
+      setPublicId(null);
+      setPreviewUrl(null);
+      setImageFile(null);
+    }
+  };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+
   return (
     <ProtectedRoute>
       <div className="p-6 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Create Program</h1>
-            <p className="text-sm text-gray-600 mt-1">Add a new program. Fill in details, upload an image and publish it to the site.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Program</h1>
+            <p className="text-sm text-gray-600 mt-1">Edit the program details, update the image and save changes.</p>
           </div>
 
           <div className="flex items-center gap-3">
-            <a href={TEST_FILE_PATH} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 hover:underline">Project Summary (file)</a>
+            <a href={EDIT_TEST_FILE} target="_blank" rel="noreferrer" className="text-sm text-indigo-600 hover:underline">Reference file</a>
             <button
               onClick={() => router.push("/admin/programs")}
               className="px-3 py-2 rounded-md border hover:bg-gray-50 transition"
@@ -356,18 +469,18 @@ export default function CreateProgramPage() {
               Cancel
             </button>
             <button
-              onClick={onCreate}
+              onClick={onSave}
               disabled={saving || imageUploading}
               className={`px-4 py-2 rounded-md text-white shadow ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
             >
-              {saving ? "Creating..." : imageUploading ? "Uploading image..." : "Create Program"}
+              {saving ? "Saving..." : imageUploading ? "Uploading image..." : "Save Changes"}
             </button>
           </div>
         </div>
 
         {err && <div className="mb-4 text-red-600 rounded p-3 bg-red-50 border border-red-100">{err}</div>}
 
-        <form onSubmit={onCreate} className="space-y-6 bg-white rounded-lg p-6 shadow-sm">
+        <form onSubmit={onSave} className="space-y-6 bg-white rounded-lg p-6 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <label className="block mb-1 font-medium">Title *</label>
@@ -396,9 +509,7 @@ export default function CreateProgramPage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block font-medium">Detailed Description</label>
-              <div className="text-sm text-gray-600">
-                Tip: use the toolbar to format content & insert images.
-              </div>
+              <div className="text-sm text-gray-600">Tip: use the toolbar to format content & insert images.</div>
             </div>
 
             <div className="mb-2">
@@ -430,9 +541,16 @@ export default function CreateProgramPage() {
               <div className="mt-3">
                 {previewUrl ? (
                   <img src={previewUrl} alt="preview" className="max-h-44 rounded border shadow-sm object-cover" />
+                ) : imageUrl ? (
+                  <img src={imageUrl} alt="current" className="max-h-44 rounded border shadow-sm object-cover" />
                 ) : (
                   <div className="h-44 rounded border flex items-center justify-center text-gray-400 bg-gray-50">No image selected</div>
                 )}
+              </div>
+
+              <div className="mt-2 flex gap-2">
+                <button type="button" onClick={() => { setPreviewUrl(null); setImageFile(null); }} className="px-3 py-1 border rounded text-sm">Clear Local</button>
+                <button type="button" onClick={handleRemoveImage} className="px-3 py-1 border rounded text-sm">Remove Image</button>
               </div>
 
               {imageUploading && (
@@ -448,7 +566,7 @@ export default function CreateProgramPage() {
             <div className="flex flex-col gap-4">
               <div className="rounded-md border p-3 bg-amber-50 text-sm shadow-sm">
                 <div className="font-semibold">Quick Info</div>
-                <div className="text-xs text-gray-600 mt-1">Templates and examples available.</div>
+                <div className="text-xs text-gray-600 mt-1">You can replace or remove the program image here.</div>
               </div>
 
               <div className="rounded-md border p-3 bg-white shadow-sm text-sm">
@@ -477,7 +595,7 @@ export default function CreateProgramPage() {
               disabled={saving || imageUploading}
               className={`px-4 py-2 rounded-md text-white shadow-sm ${saving || imageUploading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-indigo-600 to-violet-500 hover:scale-[1.02] transform transition"}`}
             >
-              {saving ? "Creating..." : "Create Program"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

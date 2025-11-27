@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import api from "@/lib/api";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { toast } from "@/components/ToastProvider";
 
 // Tiptap imports
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -12,6 +13,9 @@ import StarterKit from "@tiptap/starter-kit";
 import LinkExtension from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import ImageExtension from "@tiptap/extension-image";
+
+/* ---------- Constants ---------- */
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 /**
  * Enhanced Admin Program Edit page
@@ -33,6 +37,7 @@ function Toolbar({ editor, onImageUpload }) {
       if (!file) return;
       const url = await onImageUpload(file);
       if (url) editor.chain().focus().setImage({ src: url }).run();
+      else toast.error("Image upload failed");
     };
     input.click();
   };
@@ -43,16 +48,54 @@ function Toolbar({ editor, onImageUpload }) {
   return (
     <div className="flex gap-2 mb-3 flex-wrap items-center">
       <div className="inline-flex gap-2 p-2 rounded-md bg-gray-50 border shadow-sm">
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={`${btn} ${editor.isActive("bold") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>B</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={`${btn} ${editor.isActive("italic") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}><em>I</em></button>
-        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={`${btn} ${editor.isActive("underline") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}><u>U</u></button>
-        <button type="button" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} className={`${btn} ${editor.isActive("heading", { level: 1 }) ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>H1</button>
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={`${btn} ${editor.isActive("bulletList") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}>• List</button>
-        <button type="button" onClick={() => {
-          const url = prompt("Enter URL (include http:// or https://)");
-          if (url) editor.chain().focus().setLink({ href: url }).run();
-        }} className={`${btn}`}>Link</button>
-        <button type="button" onClick={addImage} className={`${btn}`}>Image</button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={`${btn} ${editor.isActive("bold") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={`${btn} ${editor.isActive("italic") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}
+        >
+          <em>I</em>
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className={`${btn} ${editor.isActive("underline") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}
+        >
+          <u>U</u>
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={`${btn} ${editor.isActive("heading", { level: 1 }) ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}
+        >
+          H1
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={`${btn} ${editor.isActive("bulletList") ? "ring-2 ring-indigo-200 bg-indigo-50" : ""}`}
+        >
+          • List
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const url = prompt("Enter URL (include http:// or https://)");
+            if (url) editor.chain().focus().setLink({ href: url }).run();
+          }}
+          className={`${btn}`}
+        >
+          Link
+        </button>
+        <button type="button" onClick={addImage} className={`${btn}`}>
+          Image
+        </button>
       </div>
     </div>
   );
@@ -74,6 +117,10 @@ export default function EditProgramPage() {
   const [imageUrl, setImageUrl] = useState(null); // current image url
   const [imageFile, setImageFile] = useState(null); // new file to upload
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  // upload states
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState(0);
 
   // Tiptap editor — avoid SSR hydration issues
   const editor = useEditor({
@@ -110,7 +157,9 @@ export default function EditProgramPage() {
             editor.commands.setContent(program.description);
           } catch (e) {
             setTimeout(() => {
-              try { editor.commands.setContent(program.description); } catch (_) {}
+              try {
+                editor.commands.setContent(program.description);
+              } catch (_) {}
             }, 50);
           }
         }
@@ -122,46 +171,145 @@ export default function EditProgramPage() {
       }
     })();
 
-    return () => { mounted = false; };
-  }, [id, editor]);
-
-  // Upload helper (used for editor images and main image)
-  const uploadImageToServer = async (file) => {
-    if (!file) return null;
-    try {
-      const fd = new FormData();
-      // backend may expect field name "file" or "image" — try "file" first
-      fd.append("file", file);
-      const res = await api.post("/api/uploads", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return res?.data?.url || res?.data?.fileUrl || res?.data?.path || res?.data?.location || null;
-    } catch (e) {
-      console.error("Upload failed:", e);
-      // fallback: try alternative endpoint
-      try {
-        const fd2 = new FormData();
-        fd2.append("image", file);
-        const res2 = await api.post("/api/uploads/single", fd2, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        return res2?.data?.url || res2?.data?.secure_url || null;
-      } catch (e2) {
-        console.error("Fallback upload also failed:", e2);
-        return null;
-      }
-    }
-  };
-
-  const handleMainImageChange = (e) => {
-    const f = e.target.files?.[0] ?? null;
-    setImageFile(f);
-    if (f) {
+    return () => {
+      mounted = false;
+      // revoke any blob preview URL to prevent leaks
       try {
         if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
       } catch {}
-      setPreviewUrl(URL.createObjectURL(f));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, editor]);
+
+  // Upload helper (used for editor images and main image)
+  // Replace your uploadImageToServer with this version
+// Works in Next.js client components (JS). If you use TS, add types accordingly.
+
+const uploadImageToServer = async (file) => {
+  if (!file) return null;
+  if (!file.type || !file.type.startsWith("image/")) {
+    toast.error("Only image files are allowed.");
+    return null;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    toast.error("Image too large. Max size is 5 MB.");
+    return null;
+  }
+
+  setImageUploading(true);
+  setImageUploadProgress(0);
+
+  // helper: do a single POST to given endpoint and field name
+  const tryServerUpload = async (endpoint, fieldName = "file") => {
+    try {
+      const fd = new FormData();
+      fd.append(fieldName, file, file.name);
+
+      // Important: don't set Content-Type header for FormData; axios will set boundary
+      // If you use fetch remove Content-Type too.
+      const res = await api.post(endpoint, fd, {
+        timeout: 30000,
+        onUploadProgress: (progressEvent) => {
+          try {
+            const loaded = progressEvent?.loaded ?? 0;
+            const total = progressEvent?.total ?? file.size ?? 0;
+            const pct = total ? Math.round((loaded * 100) / total) : 0;
+            setImageUploadProgress(pct);
+          } catch {}
+        },
+        // withCredentials: false, // only if needed for cookies
+      });
+
+      const data = res?.data ?? {};
+      // server might return url under different keys
+      const url = data.url || data.fileUrl || data.path || data.location || (data.result && data.result.secure_url) || null;
+      if (url) {
+        console.info(`[upload] server upload succeeded: ${endpoint}`, url);
+        return url;
+      }
+
+      // not error but no url -> treat as failure
+      console.warn(`[upload] server returned no url for ${endpoint}`, data);
+      return null;
+    } catch (err) {
+      console.warn(`[upload] server upload to ${endpoint} failed:`, err?.response?.data ?? err?.message ?? err);
+      return null;
     }
+  };
+
+  try {
+    // 1) try main endpoint (/api/uploads) with "file"
+    let url = await tryServerUpload("/api/uploads", "file");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 2) fallback: /api/uploads/single with "image"
+    url = await tryServerUpload("/api/uploads/single", "image");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 3) fallback: try direct unsigned Cloudinary (if env present)
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const unsignedPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET;
+    if (cloudName && unsignedPreset) {
+      try {
+        const unsignedUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+        const fd2 = new FormData();
+        fd2.append("file", file);
+        fd2.append("upload_preset", unsignedPreset);
+        // If you want to place into folder, you must include it in unsigned preset or supply 'folder' if preset allows.
+        const resp = await fetch(unsignedUrl, { method: "POST", body: fd2 });
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.warn("[upload] unsigned cloudinary failed:", resp.status, text);
+          throw new Error("Unsigned Cloudinary upload failed");
+        }
+        const json = await resp.json();
+        const secure = json.secure_url || json.url || null;
+        if (secure) {
+          console.info("[upload] unsigned cloudinary succeeded", secure);
+          setImageUploadProgress(0);
+          return secure;
+        }
+        console.warn("[upload] unsigned cloudinary returned no secure_url", json);
+      } catch (e) {
+        console.warn("[upload] unsigned cloudinary error:", e);
+      }
+    } else {
+      console.info("[upload] no unsigned cloudinary config (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET)");
+    }
+
+    // nothing worked
+    toast.error("Image upload failed. Check server logs and Cloudinary config.");
+    return null;
+  } finally {
+    setImageUploadProgress(0);
+    setImageUploading(false);
+  }
+};
+
+
+  const handleMainImageChange = (e) => {
+    const f = e.target.files?.[0] ?? null;
+    if (!f) return;
+    if (!f.type || !f.type.startsWith("image/")) {
+      toast.error("Only image files are allowed.");
+      return;
+    }
+    if (f.size > MAX_IMAGE_SIZE) {
+      toast.error("Image too large. Max size is 5 MB.");
+      return;
+    }
+
+    setImageFile(f);
+    try {
+      if (previewUrl && previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    } catch {}
+    setPreviewUrl(URL.createObjectURL(f));
   };
 
   const onSave = async (e) => {
@@ -202,10 +350,12 @@ export default function EditProgramPage() {
       }
 
       // nice success animation / feedback might be here (toast handled elsewhere)
+      toast.success("Program updated");
       router.push("/admin/programs");
     } catch (e) {
       console.error(e);
       setErr(e?.response?.data?.message || e?.message || "Failed to update program");
+      toast.error(e?.response?.data?.message || e?.message || "Failed to update program");
     } finally {
       setSaving(false);
     }
@@ -315,6 +465,15 @@ export default function EditProgramPage() {
                   <div className="h-44 rounded border flex items-center justify-center text-gray-400 bg-gray-50">No image selected</div>
                 )}
               </div>
+
+              {imageUploading && (
+                <div className="mt-3">
+                  <div className="text-sm text-gray-600 mb-1">Uploading: {imageUploadProgress}%</div>
+                  <div className="h-2 bg-gray-200 rounded overflow-hidden">
+                    <div style={{ width: `${imageUploadProgress}%` }} className="h-full bg-indigo-500 transition-all" />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-3">
@@ -337,6 +496,7 @@ export default function EditProgramPage() {
                       } catch (e) {
                         console.error(e);
                         setErr(e?.response?.data?.message || e?.message || "Delete failed");
+                        toast.error(e?.response?.data?.message || e?.message || "Delete failed");
                       }
                     }}
                     className="px-3 py-2 rounded-md text-sm border text-red-600 hover:bg-red-50 transition"

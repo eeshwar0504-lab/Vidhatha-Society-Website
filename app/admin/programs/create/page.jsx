@@ -1,4 +1,3 @@
-// app/admin/programs/create/page.jsx
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -156,6 +155,7 @@ export default function CreateProgramPage() {
   const [category, setCategory] = useState("social-welfare");
   const [shortDescription, setShortDescription] = useState("");
   const [imageUrl, setImageUrl] = useState(null);
+  const [publicId, setPublicId] = useState(null); // NEW: store cloudinary public_id if returned
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
@@ -208,26 +208,32 @@ export default function CreateProgramPage() {
   }, [previewUrl]);
 
   /* ---------- Upload helper ---------- */
-  const uploadImageToServer = async (file) => {
-    if (!file) return null;
-    if (!file.type || !file.type.startsWith("image/")) {
-      toast.error("Only image files are allowed.");
-      return null;
-    }
-    if (file.size > MAX_IMAGE_SIZE) {
-      toast.error("Image too large. Max size is 5 MB.");
-      return null;
-    }
+  // Replace your uploadImageToServer with this version
+// Works in Next.js client components (JS). If you use TS, add types accordingly.
 
-    const ENDPOINT = "/api/uploads";
-    setImageUploading(true);
-    setImageUploadProgress(0);
+const uploadImageToServer = async (file) => {
+  if (!file) return null;
+  if (!file.type || !file.type.startsWith("image/")) {
+    toast.error("Only image files are allowed.");
+    return null;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    toast.error("Image too large. Max size is 5 MB.");
+    return null;
+  }
 
+  setImageUploading(true);
+  setImageUploadProgress(0);
+
+  // helper: do a single POST to given endpoint and field name
+  const tryServerUpload = async (endpoint, fieldName = "file") => {
     try {
       const fd = new FormData();
-      fd.append("file", file, file.name);
+      fd.append(fieldName, file, file.name);
 
-      const res = await api.post(ENDPOINT, fd, {
+      // Important: don't set Content-Type header for FormData; axios will set boundary
+      // If you use fetch remove Content-Type too.
+      const res = await api.post(endpoint, fd, {
         timeout: 30000,
         onUploadProgress: (progressEvent) => {
           try {
@@ -237,43 +243,81 @@ export default function CreateProgramPage() {
             setImageUploadProgress(pct);
           } catch {}
         },
-        withCredentials: false,
+        // withCredentials: false, // only if needed for cookies
       });
 
       const data = res?.data ?? {};
-      const url = data.url || data.fileUrl || data.path || data.location || null;
-
-      if (!url) {
-        console.error("Upload succeeded but server returned no URL:", data);
-        toast.error("Upload succeeded but server returned no URL. Check server response.");
-        return null;
+      // server might return url under different keys
+      const url = data.url || data.fileUrl || data.path || data.location || (data.result && data.result.secure_url) || null;
+      if (url) {
+        console.info(`[upload] server upload succeeded: ${endpoint}`, url);
+        return url;
       }
 
-      setImageUploadProgress(0);
-      return url;
-    } catch (err) {
-      console.error("Upload error details:", {
-        message: err?.message,
-        response: err?.response ? { status: err.response.status, data: err.response.data } : undefined,
-        request: err?.request,
-      });
-
-      if (err?.response?.data) {
-        const body = err.response.data;
-        const serverMsg = body.message || body.error || JSON.stringify(body);
-        toast.error(serverMsg || "Upload failed (server error)");
-      } else if (err?.request) {
-        toast.error("Network/CORS error: failed to contact upload server. Check backend is running and CORS allows this origin.");
-      } else {
-        toast.error(err?.message || "Image upload failed");
-      }
-
+      // not error but no url -> treat as failure
+      console.warn(`[upload] server returned no url for ${endpoint}`, data);
       return null;
-    } finally {
-      setImageUploadProgress(0);
-      setImageUploading(false);
+    } catch (err) {
+      console.warn(`[upload] server upload to ${endpoint} failed:`, err?.response?.data ?? err?.message ?? err);
+      return null;
     }
   };
+
+  try {
+    // 1) try main endpoint (/api/uploads) with "file"
+    let url = await tryServerUpload("/api/uploads", "file");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 2) fallback: /api/uploads/single with "image"
+    url = await tryServerUpload("/api/uploads/single", "image");
+    if (url) {
+      setImageUploadProgress(0);
+      return url;
+    }
+
+    // 3) fallback: try direct unsigned Cloudinary (if env present)
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const unsignedPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET;
+    if (cloudName && unsignedPreset) {
+      try {
+        const unsignedUrl = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+        const fd2 = new FormData();
+        fd2.append("file", file);
+        fd2.append("upload_preset", unsignedPreset);
+        // If you want to place into folder, you must include it in unsigned preset or supply 'folder' if preset allows.
+        const resp = await fetch(unsignedUrl, { method: "POST", body: fd2 });
+        if (!resp.ok) {
+          const text = await resp.text();
+          console.warn("[upload] unsigned cloudinary failed:", resp.status, text);
+          throw new Error("Unsigned Cloudinary upload failed");
+        }
+        const json = await resp.json();
+        const secure = json.secure_url || json.url || null;
+        if (secure) {
+          console.info("[upload] unsigned cloudinary succeeded", secure);
+          setImageUploadProgress(0);
+          return secure;
+        }
+        console.warn("[upload] unsigned cloudinary returned no secure_url", json);
+      } catch (e) {
+        console.warn("[upload] unsigned cloudinary error:", e);
+      }
+    } else {
+      console.info("[upload] no unsigned cloudinary config (NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME / NEXT_PUBLIC_CLOUDINARY_UNSIGNED_PRESET)");
+    }
+
+    // nothing worked
+    toast.error("Image upload failed. Check server logs and Cloudinary config.");
+    return null;
+  } finally {
+    setImageUploadProgress(0);
+    setImageUploading(false);
+  }
+};
+
 
   const handleMainImageChange = (e) => {
     const f = e.target.files?.[0] ?? null;
@@ -308,6 +352,7 @@ export default function CreateProgramPage() {
     setSaving(true);
     try {
       let finalImageUrl = imageUrl;
+      let finalPublicId = publicId; // NEW: include public id if available
       if (imageFile) {
         const uploaded = await uploadImageToServer(imageFile);
         if (!uploaded) {
@@ -318,9 +363,12 @@ export default function CreateProgramPage() {
           return;
         }
         finalImageUrl = uploaded;
+        // publicId state already set by uploadImageToServer if server returned it
+        finalPublicId = publicId;
       }
       const descriptionHtml = editor ? editor.getHTML() : localContent || "";
-      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl };
+      // include publicId so backend can save it in DB if present
+      const payload = { title, category, short: shortDescription, description: descriptionHtml, imageUrl: finalImageUrl, publicId: finalPublicId };
       const res = await api.post("/api/programs", payload, { headers: { "Content-Type": "application/json" } });
       const created = res?.data?.program || res?.data?.doc || res?.data || null;
       if (!created) {
